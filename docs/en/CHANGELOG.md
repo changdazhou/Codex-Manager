@@ -6,6 +6,7 @@ It follows Keep a Changelog with a lightweight adaptation for this repository.
 ## [Unreleased]
 
 ### Added
+- Aggregate API balance checks now refresh automatically on the same interval as account-pool usage polling, controlled by the Settings usage polling worker.
 - Added Codex image-generation compatibility: `/v1/responses` now auto-injects the official `image_generation` tool by default to match Codex behavior, explicit tools are forwarded unchanged, and compatible `/v1/images/generations` plus `/v1/images/edits` endpoints are available with `gpt-image-2` as the default image tool model.
 - Added an `auth.json` step to the Codex CLI first-time setup guide, clarifying how the platform key, `auth.json`, and `config.toml` fit together.
 
@@ -14,6 +15,7 @@ It follows Keep a Changelog with a lightweight adaptation for this repository.
 - Adjusted the usage-details dialog so multiple additional quota windows can be shown in two columns with scrolling.
 
 ### Changed
+- Bumped the release version to `0.3.2` and synchronized workspace, frontend package, Tauri desktop metadata, and lockfiles.
 - Bumped the release version to `0.2.6` and synchronized workspace, frontend package, Tauri desktop metadata, and lockfiles.
 - Removed recent-commit blocks from README entry pages so they only keep stable feature and documentation entry points.
 - Restored the upstream total-timeout setting in the Settings gateway transport card. `CODEXMANAGER_UPSTREAM_TOTAL_TIMEOUT_MS` can now be viewed and changed there; default `0` means no service-side total-duration cutoff.

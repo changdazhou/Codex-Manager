@@ -6,6 +6,7 @@
 ## [Unreleased]
 
 ### Added
+- 聚合 API 余额检测现在会跟随账号池用量轮询周期自动刷新，刷新间隔和设置页“用量轮询线程”保持一致。
 - 新增 Codex 图片生成兼容链路：默认按官方 Codex 行为为 `/v1/responses` 自动注入 `image_generation` tool，支持显式 tool 透传，并提供 `/v1/images/generations` 与 `/v1/images/edits` 兼容入口，默认图片工具模型为 `gpt-image-2`。
 - Codex CLI 首次接入引导新增 `auth.json` 配置步骤，明确平台 Key、`auth.json` 与 `config.toml` 的关系。
 
@@ -14,6 +15,7 @@
 - 调整额度详情弹窗布局，附加额度较多时可按两列展示并滚动查看。
 
 ### Changed
+- 发布版本提升到 `0.3.2`，同步更新 workspace、前端包、Tauri 桌面端与锁文件。
 - 发布版本提升到 `0.2.6`，同步更新 workspace、前端包、Tauri 桌面端与锁文件。
 - README 不再展示最近提交块，首页只保留稳定的功能与文档入口。
 - 设置页恢复“上游总超时”入口，`CODEXMANAGER_UPSTREAM_TOTAL_TIMEOUT_MS` 可通过网关传输设置直接查看和修改，默认 `0` 表示不按总时长截断。
