@@ -90,6 +90,35 @@ fn path_without_query(path: &str) -> &str {
         .unwrap_or(path)
 }
 
+fn replace_path_prefix_preserving_query(path: &str, next_prefix: &str) -> String {
+    match path.split_once('?') {
+        Some((_, query)) => format!("{next_prefix}?{query}"),
+        None => next_prefix.to_string(),
+    }
+}
+
+fn custom_compact_model_for_chat_completions(
+    storage: &codexmanager_core::storage::Storage,
+    path: &str,
+) -> Option<String> {
+    if !super::super::official_responses_http::is_compact_path(path) {
+        return None;
+    }
+    let model = super::super::current_compact_model_override()?;
+    match crate::apikey_models::is_custom_model_from_storage(storage, model.as_str()) {
+        Ok(true) => Some(model),
+        Ok(false) => None,
+        Err(err) => {
+            log::warn!(
+                "event=gateway_custom_compact_model_source_lookup_failed model={} err={}",
+                model,
+                err
+            );
+            None
+        }
+    }
+}
+
 fn gateway_blocked_path_matches(path: &str, pattern: &str) -> bool {
     let pattern = pattern.trim();
     if pattern.is_empty() {
@@ -1536,7 +1565,7 @@ pub(super) fn build_local_validation_result(
     // 中文注释：下游调用方的 stream 语义必须来自原始客户端请求；
     // 否则协议适配（例如 Anthropic/Gemini 转 /responses 强制 stream=true）会污染响应模式判断。
     let client_request_meta = initial_request_meta.clone();
-    let (effective_model, effective_reasoning, effective_service_tier) =
+    let (mut effective_model, effective_reasoning, effective_service_tier) =
         resolve_effective_request_overrides(&api_key);
     let preferred_prompt_cache_key = resolve_preferred_client_prompt_cache_key(
         effective_protocol_type,
@@ -1571,6 +1600,13 @@ pub(super) fn build_local_validation_result(
             normalized_path.as_str(),
             path.as_str(),
         );
+    if let Some(custom_compact_model) =
+        custom_compact_model_for_chat_completions(&storage, path.as_str())
+    {
+        effective_model = Some(custom_compact_model);
+        path = replace_path_prefix_preserving_query(path.as_str(), "/v1/chat/completions");
+        response_adapter = super::super::ResponseAdapter::CompactFromChatCompletions;
+    }
     body = if preferred_prompt_cache_key.is_some() {
         super::super::apply_request_overrides_with_service_tier_and_prompt_cache_key_scope(
             &path,

@@ -3,7 +3,9 @@ use crate::gateway::{
     adapt_request_for_protocol, apply_request_overrides_with_service_tier_and_prompt_cache_key,
 };
 use axum::http::{HeaderMap, HeaderValue};
-use codexmanager_core::rpc::types::{ModelInfo, ModelsResponse};
+use codexmanager_core::rpc::types::{
+    ManagedModelCatalogEntry, ManagedModelCatalogResult, ModelInfo, ModelsResponse,
+};
 use codexmanager_core::storage::Storage;
 use serde_json::Value;
 
@@ -821,4 +823,37 @@ fn anthropic_model_must_exist_in_cached_model_options() {
     )
     .expect_err("missing model should fail");
     assert!(err.message.contains("claude model not found in model list"));
+}
+
+#[test]
+fn custom_compact_model_is_detected_from_model_management() {
+    let storage = Storage::open_in_memory().expect("open storage");
+    storage.init().expect("init storage");
+    crate::apikey_models::save_managed_model_catalog_with_storage(
+        &storage,
+        &ManagedModelCatalogResult {
+            items: vec![ManagedModelCatalogEntry {
+                model: ModelInfo {
+                    slug: "custom-compact-model".to_string(),
+                    display_name: "Custom compact model".to_string(),
+                    ..Default::default()
+                },
+                source_kind: "custom".to_string(),
+                user_edited: true,
+                sort_index: 0,
+                updated_at: 0,
+            }],
+            ..Default::default()
+        },
+    )
+    .expect("save custom model catalog");
+
+    assert!(
+        crate::apikey_models::is_custom_model_from_storage(&storage, "custom-compact-model")
+            .expect("read custom model source")
+    );
+    assert!(
+        !crate::apikey_models::is_custom_model_from_storage(&storage, "missing-compact-model")
+            .expect("missing model should not be custom")
+    );
 }

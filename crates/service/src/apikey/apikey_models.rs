@@ -68,6 +68,28 @@ pub(crate) fn read_model_options_from_storage(storage: &Storage) -> Result<Model
         .map(|catalog| managed_catalog_to_models_response(&catalog))
 }
 
+pub(crate) fn model_source_kind_from_storage(
+    storage: &Storage,
+    slug: &str,
+) -> Result<Option<String>, String> {
+    let normalized_slug = slug.trim();
+    if normalized_slug.is_empty() {
+        return Ok(None);
+    }
+    let catalog = read_managed_model_catalog_from_storage(storage)?;
+    Ok(catalog
+        .items
+        .into_iter()
+        .find(|item| item.model.slug.trim().eq_ignore_ascii_case(normalized_slug))
+        .map(|item| item.source_kind))
+}
+
+pub(crate) fn is_custom_model_from_storage(storage: &Storage, slug: &str) -> Result<bool, String> {
+    Ok(model_source_kind_from_storage(storage, slug)?
+        .as_deref()
+        .is_some_and(|source_kind| source_kind == MODEL_SOURCE_KIND_CUSTOM))
+}
+
 pub(crate) fn read_managed_model_catalog(
     refresh_remote: bool,
 ) -> Result<ManagedModelCatalogResult, String> {
