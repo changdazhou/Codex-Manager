@@ -33,6 +33,7 @@
 /specs/
 
 # Logs & local data
+/data/
 *.log
 *.db
 *.sqlite
