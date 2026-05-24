@@ -5,6 +5,22 @@
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-05-24
+
+### Added
+- 设置页新增 compact 模型转发规则配置，支持仅对 `/v1/responses/compact` 请求按规则改写模型。
+- 网关 trace/error 日志补齐 request gate 等待、首包耗时和慢请求 stdout 诊断，便于定位高并发流式请求延迟。
+
+### Fixed
+- 修复 Anthropic SSE 在工具调用后重复回放 completed 快照，导致客户端重复显示助手文本的问题。
+- 修复 Chat Completions 走 Responses 后 reasoning summary 丢失的问题，流式和非流式响应都会回填兼容 reasoning 字段。
+- 修复 region-blocked token refresh 会被后台轮询反复重试的问题，区域受限账号会暂停自动刷新。
+- 修复 Aggregate API / 模型同步后陈旧 source routes 和孤儿自动目录模型未清理的问题，避免已删除模型重新出现。
+- 为 request gate 提供可选等待上限，设置 `CODEXMANAGER_REQUEST_GATE_WAIT_TIMEOUT_MS=5000` 后可避免同 key/path/model 高并发流式请求长时间队头阻塞。
+
+### Changed
+- 发布版本提升到 `0.3.5`，同步更新 workspace、前端包、Tauri 桌面端与锁文件。
+
 ### Added
 - 聚合 API 余额检测现在会跟随账号池用量轮询周期自动刷新，刷新间隔和设置页“用量轮询线程”保持一致。
 - 新增 Codex 图片生成兼容链路：默认按官方 Codex 行为为 `/v1/responses` 自动注入 `image_generation` tool，支持显式 tool 透传，并提供 `/v1/images/generations` 与 `/v1/images/edits` 兼容入口，默认图片工具模型为 `gpt-image-2`。
@@ -256,7 +272,8 @@
 ### Changed
 - 账号管理页操作区整合为单一“账号操作”下拉菜单，替代右侧多按钮堆叠，界面更简洁。
 
-[Unreleased]: https://github.com/qxcnm/Codex-Manager/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/qxcnm/Codex-Manager/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/qxcnm/Codex-Manager/compare/v0.3.4...v0.3.5
 [0.2.6]: https://github.com/qxcnm/Codex-Manager/compare/v0.2.3...v0.2.6
 [0.2.3]: https://github.com/qxcnm/Codex-Manager/compare/v0.2.0...v0.2.3
 [0.2.0]: https://github.com/qxcnm/Codex-Manager/releases/tag/v0.2.0
