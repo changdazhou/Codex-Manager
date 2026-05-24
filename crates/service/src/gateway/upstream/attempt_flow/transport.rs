@@ -906,44 +906,47 @@ fn send_upstream_request_with_compression_override(
         should_wrap_upstream_as_stream_response(request_ctx.request_path, is_stream);
     let use_websocket_upstream =
         use_async_stream_transport && should_use_websocket_upstream(target_url);
-    let result = if use_websocket_upstream {
-        match send_websocket_upstream_request(
-            target_url,
-            request_deadline,
-            upstream_headers.as_slice(),
-            &body_for_request,
-        ) {
-            Ok(resp) => Ok(GatewayUpstreamResponse::Stream(resp)),
-            Err(ws_err) => {
-                // Redact query/fragment from the URL to avoid leaking sensitive parameters
-                // in warn-level logs.
-                let redacted_url = reqwest::Url::parse(target_url)
-                    .map(|mut u| { u.set_query(None); u.set_fragment(None); u.to_string() })
-                    .unwrap_or_else(|_| "<unparseable url>".to_string());
-                log::warn!(
-                    "event=gateway_websocket_upstream_fallback_to_http path={} account_id={} target_url={} err={}",
-                    request_ctx.request_path,
-                    account.id,
-                    redacted_url,
-                    ws_err
-                );
-                let async_client =
-                    super::super::super::async_upstream_client_for_account(account.id.as_str());
-                match send_async_stream_request(
-                    &async_client,
-                    method,
-                    target_url,
-                    request_ctx.request_path,
-                    request_deadline,
-                    upstream_headers.as_slice(),
-                    &body_for_request,
-                    is_stream,
-                ) {
-                    Ok(resp) => Ok(GatewayUpstreamResponse::Stream(resp)),
-                    Err(err) => Err(err),
+
+    // Try WebSocket path first (when enabled). On handshake failure return None so
+    // the caller falls through to the full HTTP async-stream retry logic below.
+    let ws_early_result: Option<GatewayUpstreamResponse> =
+        if use_websocket_upstream {
+            // Always pass the *uncompressed* body and headers to the WebSocket path.
+            // chatgpt.com's WebSocket endpoint expects a JSON (UTF-8) body; a
+            // zstd/gzip-compressed body would fail UTF-8 validation and fall back.
+            match send_websocket_upstream_request(
+                target_url,
+                request_deadline,
+                upstream_headers_uncompressed.as_slice(),
+                &body_for_transport,
+            ) {
+                Ok(resp) => Some(GatewayUpstreamResponse::Stream(resp)),
+                Err(ws_err) => {
+                    // Redact query/fragment from the URL to avoid leaking sensitive
+                    // parameters in warn-level logs.
+                    let redacted_url = reqwest::Url::parse(target_url)
+                        .map(|mut u| {
+                            u.set_query(None);
+                            u.set_fragment(None);
+                            u.to_string()
+                        })
+                        .unwrap_or_else(|_| "<unparseable url>".to_string());
+                    log::warn!(
+                        "event=gateway_websocket_upstream_fallback_to_http path={} account_id={} target_url={} err={}",
+                        request_ctx.request_path,
+                        account.id,
+                        redacted_url,
+                        ws_err
+                    );
+                    None // fall through to the full HTTP async-stream retry below
                 }
             }
-        }
+        } else {
+            None
+        };
+
+    let result = if let Some(r) = ws_early_result {
+        Ok(r)
     } else if use_async_stream_transport {
         let async_client =
             super::super::super::async_upstream_client_for_account(account.id.as_str());
@@ -1227,7 +1230,28 @@ fn send_websocket_upstream_request(
                         }
                     }
                     loop {
-                        match ws_stream.next().await {
+                        // Apply the remaining deadline to each WebSocket read so the
+                        // spawned thread cannot outlive the request deadline and leak.
+                        let next_msg = match request_deadline {
+                            Some(d) => {
+                                let remaining = d
+                                    .saturating_duration_since(Instant::now())
+                                    .max(Duration::from_millis(100));
+                                match tokio::time::timeout(remaining, ws_stream.next()).await {
+                                    Ok(m) => m,
+                                    Err(_) => {
+                                        let _ = body_tx.send(
+                                            super::super::GatewayByteStreamItem::Error(
+                                                "WebSocket read deadline exceeded".to_string(),
+                                            ),
+                                        );
+                                        return;
+                                    }
+                                }
+                            }
+                            None => ws_stream.next().await,
+                        };
+                        match next_msg {
                             None => {
                                 let _ =
                                     body_tx.send(super::super::GatewayByteStreamItem::Eof);
