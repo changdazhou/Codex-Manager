@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use tauri::webview::Color;
 use tauri::window::{Effect, EffectState, EffectsBuilder};
 use tauri::Manager;
@@ -23,17 +25,39 @@ const TRAY_PREVIEW_MARGIN: f64 = 8.0;
 /// # 返回
 /// 无
 pub(crate) fn show_main_window(app: &tauri::AppHandle) {
+    log::info!("show main window requested");
     hide_tray_preview_window(app);
-    KEEP_ALIVE_FOR_LIGHTWEIGHT_CLOSE.store(false, std::sync::atomic::Ordering::Relaxed);
     let Some(window) = ensure_main_window(app) else {
         return;
     };
+    if let Err(err) = window.unminimize() {
+        log::debug!("unminimize main window before show skipped: {}", err);
+    }
     if let Err(err) = window.show() {
         log::warn!("show main window failed: {}", err);
         return;
     }
-    let _ = window.unminimize();
-    let _ = window.set_focus();
+    KEEP_ALIVE_FOR_LIGHTWEIGHT_CLOSE.store(false, std::sync::atomic::Ordering::Relaxed);
+    if let Err(err) = window.unminimize() {
+        log::warn!("unminimize main window after show failed: {}", err);
+    }
+    if let Err(err) = window.set_focus() {
+        log::warn!("focus main window failed: {}", err);
+    }
+    log::info!("show main window completed");
+}
+
+pub(crate) fn request_show_main_window(app: &tauri::AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(50));
+        let app_for_show = app.clone();
+        if let Err(err) = app.run_on_main_thread(move || {
+            show_main_window(&app_for_show);
+        }) {
+            log::warn!("schedule show main window on main thread failed: {}", err);
+        }
+    });
 }
 
 pub(crate) fn hide_tray_preview_window(app: &tauri::AppHandle) {

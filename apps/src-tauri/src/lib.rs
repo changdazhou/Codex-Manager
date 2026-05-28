@@ -8,9 +8,8 @@ mod rpc_client;
 mod service_runtime;
 
 use app_shell::{
-    handle_main_window_event, handle_run_event, load_env_from_exe_dir,
-    notify_existing_instance_focused, setup_tray, show_main_window, sync_startup_window_state,
-    CLOSE_TO_TRAY_ON_CLOSE, TRAY_AVAILABLE,
+    handle_main_window_event, handle_run_event, load_env_from_exe_dir, request_show_main_window,
+    setup_tray, sync_startup_window_state, CLOSE_TO_TRAY_ON_CLOSE, TRAY_AVAILABLE,
 };
 
 const USAGE_REFRESH_COMPLETED_EVENT: &str = "usage-refresh-completed";
@@ -43,8 +42,8 @@ pub fn run() {
                 args,
                 cwd
             );
-            show_main_window(app);
-            notify_existing_instance_focused();
+            request_show_main_window(app);
+            log::info!("secondary instance focus request handled without blocking dialog");
         }))
         .setup(|app| {
             load_env_from_exe_dir();
