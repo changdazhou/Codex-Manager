@@ -36,6 +36,55 @@ pub(super) fn key_id_in_clause(column: &str, key_ids: &[String]) -> Option<(Stri
     Some((format!("{column} IN ({placeholders})"), params))
 }
 
+pub(super) struct KeyIdSqlFilter<'a> {
+    condition: String,
+    params: Vec<Value>,
+    // Keep the temporary table alive for as long as the generated SQL can run.
+    _temp_filter: Option<TempKeyIdFilter<'a>>,
+}
+
+impl<'a> KeyIdSqlFilter<'a> {
+    pub(super) fn create(
+        storage: &'a Storage,
+        column: &str,
+        key_ids: &[String],
+    ) -> Result<Option<Self>> {
+        let key_ids = normalize_key_ids(key_ids);
+        if key_ids.is_empty() {
+            return Ok(None);
+        }
+
+        if key_ids.len() <= SQLITE_IN_CLAUSE_BATCH_SIZE {
+            let Some((condition, params)) = key_id_in_clause(column, &key_ids) else {
+                return Ok(None);
+            };
+            return Ok(Some(Self {
+                condition,
+                params,
+                _temp_filter: None,
+            }));
+        }
+
+        let Some(temp_filter) = TempKeyIdFilter::create(storage, &key_ids)? else {
+            return Ok(None);
+        };
+        let condition = temp_filter.condition(column);
+        Ok(Some(Self {
+            condition,
+            params: Vec::new(),
+            _temp_filter: Some(temp_filter),
+        }))
+    }
+
+    pub(super) fn condition(&self) -> &str {
+        &self.condition
+    }
+
+    pub(super) fn params(&self) -> &[Value] {
+        &self.params
+    }
+}
+
 pub(super) struct TempKeyIdFilter<'a> {
     storage: &'a Storage,
     table_name: String,
@@ -91,15 +140,19 @@ impl<'a> TempKeyIdFilter<'a> {
         }))
     }
 
-    pub(super) fn exists_clause(&self, column: &str) -> String {
+    pub(super) fn condition(&self, column: &str) -> String {
         format!(
-            " AND EXISTS (
+            "EXISTS (
                 SELECT 1
                 FROM {} key_filter
                 WHERE key_filter.key_id = {column}
              )",
             self.table_name
         )
+    }
+
+    pub(super) fn exists_clause(&self, column: &str) -> String {
+        format!(" AND {}", self.condition(column))
     }
 }
 

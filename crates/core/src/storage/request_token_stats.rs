@@ -72,20 +72,23 @@ const TOKEN_ROLLUP_COLUMNS: &str = "
     COUNT(DISTINCT CASE WHEN r.status_code >= 200 AND r.status_code <= 299 THEN r.id END) AS success_count,
     COUNT(DISTINCT CASE WHEN IFNULL(r.status_code, 0) >= 400 OR TRIM(IFNULL(r.error, '')) <> '' THEN r.id END) AS error_count";
 
-const USER_OWNER_EXPR: &str =
-    "COALESCE(NULLIF(TRIM(charge.owner_id), ''), NULLIF(TRIM(owner.owner_user_id), ''))";
-
-// User attribution prefers the request_charge wallet owner. The api_key_owners
-// fallback is current-owner based, so old uncharged logs are approximate.
-const USER_OWNER_JOINS: &str = "
-    LEFT JOIN (
-        SELECT l.request_log_id, MIN(w.owner_id) AS owner_id
+const USER_OWNER_EXPR: &str = "COALESCE(
+    (
+        SELECT MIN(NULLIF(TRIM(w.owner_id), ''))
         FROM app_wallet_ledger_entries l
         JOIN app_wallets w ON w.id = l.wallet_id
-        WHERE l.entry_kind = 'request_charge'
+        WHERE l.request_log_id = r.id
+          AND l.entry_kind = 'request_charge'
           AND w.owner_kind = 'user'
-        GROUP BY l.request_log_id
-    ) charge ON charge.request_log_id = r.id
+    ),
+    NULLIF(TRIM(owner.owner_user_id), '')
+)";
+
+// User attribution prefers the request_charge wallet owner. Use a correlated
+// lookup so dashboard range queries do not pre-aggregate the entire ledger table.
+// The api_key_owners fallback is current-owner based, so old uncharged logs are
+// approximate.
+const USER_OWNER_JOINS: &str = "
     LEFT JOIN api_key_owners owner ON owner.key_id = r.key_id AND owner.owner_kind = 'user'";
 
 fn token_usage_rollup_from_row(row: &Row<'_>, offset: usize) -> Result<TokenUsageRollup> {
