@@ -17,7 +17,6 @@ use serde_json::Value;
 use crate::gateway;
 use crate::storage_helpers;
 
-const CODEX_IMAGE_TOOL_MODEL: &str = "gpt-image-2";
 const MODEL_CACHE_SCOPE_DEFAULT: &str = "default";
 const MODEL_SOURCE_KIND_REMOTE: &str = "remote";
 const MODEL_SOURCE_KIND_CUSTOM: &str = "custom";
@@ -91,9 +90,7 @@ pub(crate) fn read_managed_model_catalog(
                     return Ok(cached_catalog);
                 }
                 if refresh_remote {
-                    return Err(
-                        "远端模型目录没有返回可用 Codex 文本模型，已拒绝覆盖本地目录".to_string(),
-                    );
+                    return Err("远端模型目录没有返回可用模型，已拒绝覆盖本地目录".to_string());
                 }
             }
             let merged_catalog = merge_managed_model_catalog(cached_catalog.clone(), models);
@@ -115,12 +112,8 @@ pub(crate) fn read_managed_model_catalog(
     }
 }
 
-fn is_codex_image_tool_slug(slug: &str) -> bool {
-    slug.trim().eq_ignore_ascii_case(CODEX_IMAGE_TOOL_MODEL)
-}
-
 fn model_is_catalog_text_model(model: &ModelInfo) -> bool {
-    !is_codex_image_tool_slug(model.slug.as_str())
+    !model.slug.trim().is_empty()
 }
 
 fn models_response_has_catalog_text_model(models: &ModelsResponse) -> bool {
@@ -137,7 +130,6 @@ fn managed_catalog_has_catalog_text_model(catalog: &ManagedModelCatalogResult) -
 pub(crate) fn read_managed_model_catalog_from_storage(
     storage: &Storage,
 ) -> Result<ManagedModelCatalogResult, String> {
-    purge_codex_image_tool_model(storage)?;
     let rows = storage
         .list_model_catalog_models(MODEL_CACHE_SCOPE_DEFAULT)
         .map_err(|e| e.to_string())?;
@@ -224,12 +216,6 @@ pub(crate) fn save_managed_model_catalog_model(
     let current_catalog = read_managed_model_catalog_from_storage(&storage)?;
     let normalized_model =
         normalize_model_info(params.model).ok_or_else(|| "模型 slug 不能为空".to_string())?;
-    if is_codex_image_tool_slug(normalized_model.slug.as_str()) {
-        return Err(format!(
-            "模型 `{}` 是 Codex 图片工具的内部模型，不能加入平台模型目录",
-            normalized_model.slug
-        ));
-    }
     let previous_slug = params
         .previous_slug
         .as_deref()
@@ -317,7 +303,7 @@ pub(crate) fn prune_stale_remote_managed_model_catalog() -> Result<ManagedModelC
     let remote_models = gateway::fetch_models_for_picker()?;
     let remote_models = normalize_models_response(remote_models);
     if !models_response_has_catalog_text_model(&remote_models) {
-        return Err("远端模型目录没有返回可用 Codex 文本模型，已拒绝清理本地目录".to_string());
+        return Err("远端模型目录没有返回可用模型，已拒绝清理本地目录".to_string());
     }
 
     let merged_catalog = merge_managed_model_catalog(cached_catalog, remote_models.clone());
@@ -1220,9 +1206,6 @@ fn normalize_managed_model_catalog(
         let Some(model) = normalize_model_info(item.model) else {
             continue;
         };
-        if is_codex_image_tool_slug(model.slug.as_str()) {
-            continue;
-        }
         if !seen.insert(model.slug.clone()) {
             continue;
         }
@@ -1335,9 +1318,6 @@ pub(crate) fn normalize_models_response(response: ModelsResponse) -> ModelsRespo
     let mut seen = HashSet::new();
     for model in response.models {
         if let Some(normalized) = normalize_model_info(model) {
-            if is_codex_image_tool_slug(normalized.slug.as_str()) {
-                continue;
-            }
             if seen.insert(normalized.slug.clone()) {
                 models.push(normalized);
             }
@@ -1631,7 +1611,6 @@ fn save_managed_model_catalog_rows(
     storage
         .upsert_model_catalog_available_in_plans(&available_in_plans)
         .map_err(|e| e.to_string())?;
-    purge_codex_image_tool_model(storage)?;
     Ok(())
 }
 
@@ -1835,10 +1814,6 @@ fn prune_unedited_remote_model_catalog_entries_missing_from_remote(
         }
     }
     Ok(())
-}
-
-fn purge_codex_image_tool_model(storage: &Storage) -> Result<(), String> {
-    delete_model_catalog_entry(storage, CODEX_IMAGE_TOOL_MODEL)
 }
 
 fn reasoning_records_from_model(
@@ -2145,10 +2120,11 @@ mod tests {
 
     use super::{
         auto_associate_aggregate_api_source_models, auto_associate_source_models,
-        bootstrap_account_pool_model_routes, bootstrap_aggregate_api_model_routes,
-        delete_model_catalog_entry, managed_catalog_to_models_response,
-        merge_managed_model_catalog, merge_models_response, normalize_managed_model_catalog,
-        normalize_models_response, prune_unedited_remote_model_catalog_entries_missing_from_remote,
+        auto_platform_model_from_source_model, bootstrap_account_pool_model_routes,
+        bootstrap_aggregate_api_model_routes, delete_model_catalog_entry,
+        managed_catalog_to_models_response, merge_managed_model_catalog, merge_models_response,
+        normalize_managed_model_catalog, normalize_models_response,
+        prune_unedited_remote_model_catalog_entries_missing_from_remote,
         read_managed_model_catalog_from_storage, read_managed_model_routing_from_storage,
         read_model_options_from_storage, save_managed_model_catalog_with_storage,
         save_model_options_with_storage, sync_aggregate_api_source_models,
@@ -2407,7 +2383,7 @@ mod tests {
     }
 
     #[test]
-    fn normalize_models_response_filters_codex_image_tool_model() {
+    fn normalize_models_response_keeps_codex_image_model_from_remote() {
         let response = ModelsResponse {
             models: vec![
                 ModelInfo {
@@ -2434,7 +2410,7 @@ mod tests {
                 .iter()
                 .map(|model| model.slug.as_str())
                 .collect::<Vec<_>>(),
-            vec!["gpt-5.4-mini"]
+            vec!["gpt-5.4-mini", "gpt-image-2"]
         );
         assert_eq!(
             normalized.extra.get("etag").and_then(Value::as_str),
@@ -2443,7 +2419,7 @@ mod tests {
     }
 
     #[test]
-    fn normalize_managed_catalog_filters_codex_image_tool_model() {
+    fn normalize_managed_catalog_keeps_codex_image_model() {
         let catalog = ManagedModelCatalogResult {
             items: vec![
                 ManagedModelCatalogEntry {
@@ -2477,10 +2453,33 @@ mod tests {
         let normalized = normalize_managed_model_catalog(catalog);
         let response = managed_catalog_to_models_response(&normalized);
 
-        assert_eq!(normalized.items.len(), 1);
+        assert_eq!(normalized.items.len(), 2);
         assert_eq!(normalized.items[0].model.slug, "gpt-5.4-mini");
-        assert_eq!(response.models.len(), 1);
+        assert_eq!(normalized.items[1].model.slug, "gpt-image-2");
+        assert_eq!(response.models.len(), 2);
         assert_eq!(response.models[0].slug, "gpt-5.4-mini");
+        assert_eq!(response.models[1].slug, "gpt-image-2");
+    }
+
+    #[test]
+    fn auto_platform_model_keeps_codex_image_model_from_source() {
+        let now = now_ts();
+        let source_model = ModelSourceModel {
+            source_kind: ROUTING_SOURCE_KIND_OPENAI_ACCOUNT.to_string(),
+            source_id: "acc-image".to_string(),
+            display_name: Some("GPT Image 2".to_string()),
+            upstream_model: "gpt-image-2".to_string(),
+            status: "available".to_string(),
+            discovery_kind: "synced".to_string(),
+            last_synced_at: Some(now),
+            extra_json: "{}".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+
+        let model =
+            auto_platform_model_from_source_model(&source_model).expect("auto platform model");
+        assert_eq!(model.slug, "gpt-image-2");
     }
 
     #[test]
@@ -2608,7 +2607,7 @@ mod tests {
     }
 
     #[test]
-    fn delete_model_catalog_entry_removes_model_group_and_source_routes() {
+    fn delete_model_catalog_entry_removes_model_group_and_platform_source_routes() {
         let storage = Storage::open_in_memory().expect("open storage");
         storage.init().expect("init storage");
         seed_platform_catalog(&storage, &["gpt-delete"]);
@@ -2636,6 +2635,21 @@ mod tests {
                 updated_at: now,
             })
             .expect("seed mapping");
+        storage
+            .upsert_model_source_mapping(&ModelSourceMapping {
+                id: "mapping-wrapper".to_string(),
+                platform_model_slug: "custom-wrapper".to_string(),
+                source_kind: ROUTING_SOURCE_KIND_OPENAI_ACCOUNT.to_string(),
+                source_id: "acc-delete".to_string(),
+                upstream_model: "gpt-delete".to_string(),
+                enabled: true,
+                priority: 0,
+                weight: 1,
+                billing_model_slug: None,
+                created_at: now,
+                updated_at: now,
+            })
+            .expect("seed wrapper mapping");
 
         delete_model_catalog_entry(&storage, "gpt-delete").expect("delete catalog entry");
 
@@ -2647,47 +2661,60 @@ mod tests {
             .list_model_group_models_for_group("mg_default")
             .expect("list default model group models")
             .is_empty());
-        assert!(storage
+        let remaining_source_models = storage
             .list_model_source_models(Some(ROUTING_SOURCE_KIND_OPENAI_ACCOUNT), Some("acc-delete"))
             .expect("list source models")
-            .is_empty());
+            .into_iter()
+            .map(|model| model.upstream_model)
+            .collect::<Vec<_>>();
+        assert_eq!(remaining_source_models, vec!["gpt-delete"]);
         assert!(storage
             .list_model_source_mappings(Some("gpt-delete"))
             .expect("list mappings")
             .is_empty());
+        let remaining_mapping_slugs = storage
+            .list_model_source_mappings(None)
+            .expect("list all mappings")
+            .into_iter()
+            .map(|mapping| mapping.platform_model_slug)
+            .collect::<Vec<_>>();
+        assert_eq!(remaining_mapping_slugs, vec!["custom-wrapper"]);
     }
 
     #[test]
-    fn read_managed_catalog_purges_existing_codex_image_tool_rows() {
+    fn read_managed_catalog_preserves_existing_codex_image_model_rows() {
         let storage = Storage::open_in_memory().expect("open storage");
         storage.init().expect("init storage");
         storage
             .upsert_model_catalog_models(&[model_catalog_record("gpt-image-2")])
-            .expect("seed legacy image catalog row");
+            .expect("seed image catalog row");
 
         assert!(storage
             .list_model_catalog_models("default")
-            .expect("list catalog before purge")
+            .expect("list catalog before read")
             .iter()
             .any(|model| model.slug == "gpt-image-2"));
         assert!(storage
             .list_model_group_models_for_group("mg_default")
-            .expect("list default model group models before purge")
+            .expect("list default model group models before read")
             .iter()
             .any(|model| model.platform_model_slug == "gpt-image-2"));
 
         let response =
             read_managed_model_catalog_from_storage(&storage).expect("read managed catalog");
 
-        assert!(response.items.is_empty());
+        assert_eq!(response.items.len(), 1);
+        assert_eq!(response.items[0].model.slug, "gpt-image-2");
         assert!(storage
             .list_model_catalog_models("default")
-            .expect("list catalog after purge")
-            .is_empty());
+            .expect("list catalog after read")
+            .iter()
+            .any(|model| model.slug == "gpt-image-2"));
         assert!(storage
             .list_model_group_models_for_group("mg_default")
-            .expect("list default model group models after purge")
-            .is_empty());
+            .expect("list default model group models after read")
+            .iter()
+            .any(|model| model.platform_model_slug == "gpt-image-2"));
     }
 
     #[test]

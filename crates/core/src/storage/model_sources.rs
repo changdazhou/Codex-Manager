@@ -514,11 +514,7 @@ impl Storage {
         }
         self.conn.execute(
             "DELETE FROM model_source_mappings
-             WHERE platform_model_slug = ?1 OR upstream_model = ?1",
-            params![&slug],
-        )?;
-        self.conn.execute(
-            "DELETE FROM model_source_models WHERE upstream_model = ?1",
+             WHERE platform_model_slug = ?1",
             params![&slug],
         )?;
         Ok(())

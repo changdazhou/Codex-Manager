@@ -85,7 +85,6 @@ fn user_group_entry(assignment: UserModelGroup) -> UserModelGroupEntry {
 }
 
 fn result_from_storage(storage: &Storage) -> Result<ModelGroupListResult, String> {
-    crate::apikey_models::read_managed_model_catalog_from_storage(storage)?;
     storage
         .bootstrap_default_model_group()
         .map_err(|err| format!("bootstrap default model group failed: {err}"))?;
@@ -331,9 +330,6 @@ pub(crate) fn allowed_model_slugs_for_api_key(
     if user.role == "admin" {
         return Ok(None);
     }
-    storage
-        .prune_default_model_group_models_not_in_catalog()
-        .map_err(|err| format!("prune default model group failed: {err}"))?;
     let slugs = storage
         .allowed_model_slugs_for_user(user_id, now_ts())
         .map_err(|err| format!("read allowed model groups failed: {err}"))?
