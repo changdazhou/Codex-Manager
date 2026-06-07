@@ -116,6 +116,7 @@ export const EN_MESSAGES: MessageCatalog = {
     "Control how Service and Web bind, either local-only or LAN-accessible.",
   监听地址: "Bind address",
   当前访问地址: "Current access address",
+  默认网关: "Default gateway",
   实际监听地址: "Actual bind address",
   界面语言: "Interface language",
   "切换应用界面语言，设置后会立即生效并持久化保存。":

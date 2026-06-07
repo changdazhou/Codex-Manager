@@ -57,6 +57,25 @@ function ActionLink({
   );
 }
 
+function MetadataItem({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: ReactNode;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="grid gap-1 rounded-lg border border-border/50 bg-background/50 p-3 md:grid-cols-[140px_minmax(0,1fr)] md:items-start">
+      <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+      <span className={cn("min-w-0 break-all text-xs text-foreground", valueClassName)}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function CurrentModeCard({
   t,
   status,
@@ -371,7 +390,7 @@ export function AdvancedRecoveryPanel({
         <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
       <div className="grid gap-5 border-t border-border/60 px-5 py-5">
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid items-start gap-5 lg:grid-cols-2">
           <Card className="border-border/70">
             <CardHeader>
               <CardTitle>{t("Profile 目标目录")}</CardTitle>
@@ -401,57 +420,62 @@ export function AdvancedRecoveryPanel({
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
-                <div className="flex justify-between gap-3">
-                  <span>{t("auth.json")}</span>
-                  <span className="truncate text-foreground">{status?.authPath || "-"}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span>{t("config.toml")}</span>
-                  <span className="truncate text-foreground">{status?.configPath || "-"}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span>{t("CodexManager 管理文件")}</span>
-                  <span className="truncate text-foreground">{status?.managedStorageRoot || "-"}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span>{t("管理标记")}</span>
-                  <span className="truncate text-foreground">{status?.markerPath || "-"}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span>{t("可写")}</span>
-                  <span className="text-foreground">{status?.profileWritable ? t("是") : t("否或未知")}</span>
-                </div>
+              <div className="grid gap-2 rounded-lg border bg-muted/30 p-3">
+                <MetadataItem label={t("auth.json")} value={status?.authPath || "-"} />
+                <MetadataItem label={t("config.toml")} value={status?.configPath || "-"} />
+                <MetadataItem
+                  label={t("CodexManager 管理文件")}
+                  value={status?.managedStorageRoot || "-"}
+                />
+                <MetadataItem label={t("管理标记")} value={status?.markerPath || "-"} />
+                <MetadataItem
+                  label={t("可写")}
+                  value={status?.profileWritable ? t("是") : t("否或未知")}
+                  valueClassName="break-normal"
+                />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/70">
+          <Card className="self-start border-border/70">
             <CardHeader>
               <CardTitle>{t("Gateway base_url")}</CardTitle>
               <CardDescription>
                 {t("默认使用当前 Web 服务可访问的本地网关地址。")}
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-2">
-              <Label htmlFor="gateway-base-url">{t("OpenAI gateway base_url")}</Label>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Input
-                  id="gateway-base-url"
-                  value={gatewayBaseUrl}
-                  onChange={(event) => onGatewayBaseUrlChange(event.target.value)}
-                  placeholder={defaultGatewayBaseUrl || "http://localhost:48760/v1"}
-                  disabled={!isServiceReady || isMutating}
+            <CardContent className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="gateway-base-url">{t("OpenAI gateway base_url")}</Label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    id="gateway-base-url"
+                    value={gatewayBaseUrl}
+                    onChange={(event) => onGatewayBaseUrlChange(event.target.value)}
+                    placeholder={defaultGatewayBaseUrl || "http://localhost:48760/v1"}
+                    disabled={!isServiceReady || isMutating}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onUseCurrentGateway}
+                    disabled={!defaultGatewayBaseUrl || isMutating}
+                    className="sm:shrink-0"
+                  >
+                    <Wrench className="size-4" />
+                    {t("使用当前网关")}
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-2 rounded-lg border bg-muted/30 p-3">
+                <MetadataItem
+                  label={t("当前访问地址")}
+                  value={gatewayBaseUrl || defaultGatewayBaseUrl || "-"}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onUseCurrentGateway}
-                  disabled={!defaultGatewayBaseUrl || isMutating}
-                >
-                  <Wrench className="size-4" />
-                  {t("使用当前网关")}
-                </Button>
+                <MetadataItem
+                  label={t("默认网关")}
+                  value={defaultGatewayBaseUrl || "-"}
+                />
               </div>
             </CardContent>
           </Card>
@@ -495,7 +519,7 @@ export function AdvancedRecoveryPanel({
                     {latestHistoryRepair.addedSessionIndexEntryCount}
                   </span>
                   {latestHistoryRepair.backupDir ? (
-                    <span className="truncate">{t("备份目录")}：{latestHistoryRepair.backupDir}</span>
+                    <span className="break-all">{t("备份目录")}：{latestHistoryRepair.backupDir}</span>
                   ) : null}
                   {latestHistoryRepair.warnings.length > 0 ? (
                     <span className="text-amber-600 dark:text-amber-400">{t("警告")}：{latestHistoryRepair.warnings[0]}</span>
@@ -521,7 +545,7 @@ export function AdvancedRecoveryPanel({
                 </Button>
               </div>
               <div className="grid gap-2 text-muted-foreground sm:grid-cols-2">
-                <span className="truncate">{t("备份目录")}：{status?.historyBackupRoot || "-"}</span>
+                <span className="break-all sm:col-span-2">{t("备份目录")}：{status?.historyBackupRoot || "-"}</span>
                 <span>{t("数量 / 占用")}：{status?.historyBackupCount ?? 0} / {" "}{formatBytes(status?.historyBackupBytes)}</span>
                 <span className="sm:col-span-2">
                   {t("保留策略")}：
