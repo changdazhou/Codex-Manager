@@ -369,7 +369,8 @@ fn escape_html(text: &str) -> String {
 /// # 返回
 /// 返回函数执行结果
 async fn runtime_info() -> impl IntoResponse {
-    let author_content_url = read_env_trim("CODEXMANAGER_AUTHOR_CONTENT_URL").unwrap_or_default();
+    let author_content_url = read_env_trim("CODEXMANAGER_AUTHOR_CONTENT_URL")
+        .unwrap_or_else(|| "/api/author-content".to_string());
     Json(serde_json::json!({
         "mode": "web-gateway",
         "rpcBaseUrl": "/api/rpc",
@@ -757,7 +758,7 @@ mod tests {
 
         assert_eq!(payload["mode"], "web-gateway");
         assert_eq!(payload["rpcBaseUrl"], "/api/rpc");
-        assert_eq!(payload["authorContentUrl"], "");
+        assert_eq!(payload["authorContentUrl"], "/api/author-content");
         assert_eq!(payload["canManageService"], false);
         assert_eq!(payload["canSelfUpdate"], false);
         assert_eq!(payload["canCloseToTray"], false);

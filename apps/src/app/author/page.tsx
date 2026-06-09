@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { appClient } from "@/lib/api/app-client";
+import { useRuntimeCapabilities } from "@/hooks/useRuntimeCapabilities";
 import { useI18n } from "@/lib/i18n/provider";
 import {
   normalizeSponsorLinkItems,
@@ -35,6 +36,8 @@ import { toast } from "sonner";
 
 const AUTHOR_WECHAT_ID = "ProsperGao";
 const AUTHOR_TELEGRAM_GROUP_URL = "https://t.me/+OdpFa9GvjxhjMDhl";
+const FALLBACK_AUTHOR_CONTENT_API =
+  "https://author.qxnm.top/api/public/author-content";
 const AUTHOR_SUPPORT_IMAGES = [
   {
     key: "alipay",
@@ -125,10 +128,10 @@ function PartnerTable({
   );
 }
 
-const AUTHOR_CONTENT_API = "https://author.qxnm.top/api/public/author-content";
-
 export default function AuthorPage() {
   const { t } = useI18n();
+  const { authorContentUrl } = useRuntimeCapabilities();
+  const contentUrl = authorContentUrl || FALLBACK_AUTHOR_CONTENT_API;
   const [authorContent, setAuthorContent] = useState<{
     authorSponsors: SponsorLinkItem[];
     authorServerRecommendations: SponsorLinkItem[];
@@ -140,7 +143,7 @@ export default function AuthorPage() {
     let cancelled = false;
 
     const loadContent = () => {
-      void fetch(AUTHOR_CONTENT_API, {
+      void fetch(contentUrl, {
         cache: "no-store",
         headers: { Accept: "application/json" },
       })
@@ -165,7 +168,7 @@ export default function AuthorPage() {
       cancelled = true;
       clearInterval(timer);
     };
-  }, []);
+  }, [contentUrl]);
 
   const visibleSponsors = authorContent?.authorSponsors ?? [];
   const visibleServerRecommendations =

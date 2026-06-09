@@ -59,9 +59,22 @@ test("normalizeRuntimeCapabilities 为 Web 网关补齐默认能力", () => {
 
   assert.equal(capabilities.mode, "web-gateway");
   assert.equal(capabilities.rpcBaseUrl, "/gateway/rpc");
+  assert.equal(capabilities.authorContentUrl, "/api/author-content");
   assert.equal(capabilities.canManageService, false);
   assert.equal(capabilities.canUseBrowserFileImport, true);
   assert.equal(capabilities.canUseBrowserDownloadExport, true);
+});
+
+test("normalizeRuntimeCapabilities 接受 Web 网关下发的同源作者内容路径", () => {
+  const capabilities = runtime.normalizeRuntimeCapabilities(
+    {
+      mode: "web-gateway",
+      authorContentUrl: "/api/author-content",
+    },
+    "/api/rpc"
+  );
+
+  assert.equal(capabilities.authorContentUrl, "/api/author-content");
 });
 
 test("normalizeRuntimeCapabilities 在 unsupported-web 下保持保守默认值", () => {

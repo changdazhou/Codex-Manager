@@ -1,12 +1,16 @@
 import type { RuntimeCapabilities, RuntimeMode } from "@/types";
 
 export const DEFAULT_WEB_RPC_BASE_URL = "/api/rpc";
+export const DEFAULT_WEB_AUTHOR_CONTENT_URL = "/api/author-content";
 export const DEFAULT_UNSUPPORTED_WEB_REASON =
   "当前页面缺少 CodexManager Web 运行壳，无法访问管理 RPC。请通过 codexmanager-web 打开，或在反向代理中转发 /api/rpc。";
 const CONFIGURED_AUTHOR_CONTENT_URL =
   normalizeAuthorContentUrl(
     process.env.NEXT_PUBLIC_CODEXMANAGER_AUTHOR_CONTENT_URL
   ) || "https://author.qxnm.top/api/public/author-content";
+const CONFIGURED_WEB_AUTHOR_CONTENT_URL = normalizeAuthorContentUrl(
+  process.env.NEXT_PUBLIC_CODEXMANAGER_AUTHOR_CONTENT_URL
+);
 
 export type RuntimeCapabilityView = {
   runtimeCapabilities: RuntimeCapabilities | null;
@@ -84,7 +88,12 @@ export function normalizeAuthorContentUrl(
   if (!normalized) {
     return "";
   }
-  return /^https?:\/\//i.test(normalized) ? normalized : "";
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+  return normalized.startsWith("/") && !normalized.startsWith("//")
+    ? normalized
+    : "";
 }
 
 /**
@@ -178,7 +187,8 @@ export function buildWebGatewayRuntimeCapabilities(
   return {
     mode: "web-gateway",
     rpcBaseUrl: normalizeRpcBaseUrl(rpcBaseUrl) || DEFAULT_WEB_RPC_BASE_URL,
-    authorContentUrl: CONFIGURED_AUTHOR_CONTENT_URL,
+    authorContentUrl:
+      CONFIGURED_WEB_AUTHOR_CONTENT_URL || DEFAULT_WEB_AUTHOR_CONTENT_URL,
     canManageService: false,
     canSelfUpdate: false,
     canCloseToTray: false,
