@@ -201,6 +201,14 @@ fn direct_upstream_model_matches_route(
         if !matches_source_kind(source_kind) {
             continue;
         }
+        let has_conflicting_mapping = storage
+            .list_enabled_model_source_mappings_for_platform(model)
+            .map_err(|err| err.to_string())?
+            .into_iter()
+            .any(|m| m.source_kind != source_kind);
+        if has_conflicting_mapping {
+            continue;
+        }
         let ids = storage
             .list_available_source_model_ids_by_upstream_model(source_kind, model)
             .map_err(|err| err.to_string())?;

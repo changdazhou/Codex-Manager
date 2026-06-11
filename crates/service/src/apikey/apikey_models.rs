@@ -882,13 +882,28 @@ fn auto_associate_source_models(
     source_id: &str,
     auto_create_platform_models: bool,
 ) -> Result<(), String> {
-    let existing_source_platform_mappings = storage
+    let all_mappings: Vec<codexmanager_core::storage::ModelSourceMapping> = storage
         .list_model_source_mappings(None)
-        .map_err(|err| format!("list model mappings failed: {err}"))?
-        .into_iter()
+        .map_err(|err| format!("list model mappings failed: {err}"))?;
+
+    let existing_source_platform_mappings = all_mappings
+        .iter()
         .filter(|mapping| mapping.source_kind == source_kind && mapping.source_id == source_id)
-        .map(|mapping| mapping.platform_model_slug)
+        .map(|mapping| mapping.platform_model_slug.clone())
         .collect::<HashSet<_>>();
+
+    let aggregate_api_model_slugs: HashSet<String> =
+        if source_kind == ROUTING_SOURCE_KIND_OPENAI_ACCOUNT {
+            all_mappings
+                .iter()
+                .filter(|mapping| {
+                    mapping.source_kind == ROUTING_SOURCE_KIND_AGGREGATE_API && mapping.enabled
+                })
+                .map(|mapping| mapping.platform_model_slug.clone())
+                .collect()
+        } else {
+            HashSet::new()
+        };
 
     let prefs: std::collections::HashMap<String, String> = storage
         .list_model_source_mapping_preferences(source_kind, source_id)
@@ -961,6 +976,11 @@ fn auto_associate_source_models(
     let now = now_ts();
     for source_model in &source_models {
         if !platform_slugs.contains(source_model.upstream_model.as_str()) {
+            continue;
+        }
+        if source_kind == ROUTING_SOURCE_KIND_OPENAI_ACCOUNT
+            && aggregate_api_model_slugs.contains(source_model.upstream_model.as_str())
+        {
             continue;
         }
         if existing_source_platform_mappings.contains(source_model.upstream_model.as_str()) {

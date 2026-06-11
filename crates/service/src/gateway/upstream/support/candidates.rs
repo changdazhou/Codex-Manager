@@ -8,14 +8,18 @@ pub(in super::super) enum CandidateSkipReason {
 }
 
 fn account_source_ids_for_model(storage: &Storage, model: &str) -> Result<HashSet<String>, String> {
-    let mut account_source_ids = storage
+    let all_mappings = storage
         .list_enabled_model_source_mappings_for_platform(model)
-        .map_err(|err| format!("list model source mappings failed: {err}"))?
+        .map_err(|err| format!("list model source mappings failed: {err}"))?;
+    let has_aggregate_mapping = all_mappings
+        .iter()
+        .any(|mapping| mapping.source_kind == "aggregate_api");
+    let mut account_source_ids: HashSet<String> = all_mappings
         .into_iter()
         .filter(|mapping| mapping.source_kind == "openai_account")
         .map(|mapping| mapping.source_id)
-        .collect::<HashSet<_>>();
-    if account_source_ids.is_empty() {
+        .collect();
+    if account_source_ids.is_empty() && !has_aggregate_mapping {
         account_source_ids.extend(
             storage
                 .list_available_source_model_ids_by_upstream_model("openai_account", model)
