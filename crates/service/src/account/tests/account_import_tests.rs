@@ -773,3 +773,75 @@ fn import_account_auth_json_keeps_valid_items_when_one_content_is_invalid() {
     }
     let _ = std::fs::remove_file(&db_path);
 }
+
+/// 函数 `import_account_auth_json_handles_large_multi_batch_payload`
+///
+/// 作者: gaohongshun
+///
+/// 时间: 2026-06-11
+///
+/// # 参数
+/// 无
+///
+/// # 返回
+/// 无
+#[test]
+fn import_account_auth_json_handles_large_multi_batch_payload() {
+    let _guard = crate::test_env_guard();
+    let db_path = unique_temp_db_path();
+    let previous_db_path = std::env::var("CODEXMANAGER_DB_PATH").ok();
+    let previous_auto_refresh =
+        std::env::var("CODEXMANAGER_AUTO_USAGE_REFRESH_AFTER_ACCOUNT_ADD").ok();
+    let previous_batch_size = std::env::var("CODEXMANAGER_ACCOUNT_IMPORT_BATCH_SIZE").ok();
+    std::env::set_var("CODEXMANAGER_DB_PATH", &db_path);
+    std::env::set_var("CODEXMANAGER_AUTO_USAGE_REFRESH_AFTER_ACCOUNT_ADD", "0");
+    std::env::set_var("CODEXMANAGER_ACCOUNT_IMPORT_BATCH_SIZE", "200");
+
+    let storage = Storage::open(&db_path).expect("open storage");
+    storage.init().expect("init storage");
+    drop(storage);
+
+    let contents = (0..1000)
+        .map(|index| {
+            json!({
+                "type": "codex",
+                "email": format!("bulk-{index}@example.com"),
+                "account_id": format!("bulk-account-{index}"),
+                "chatgpt_account_id": format!("bulk-chatgpt-{index}"),
+                "workspace_id": format!("bulk-workspace-{index}"),
+                "access_token": format!("access.bulk.{index}"),
+                "refresh_token": format!("refresh.bulk.{index}")
+            })
+            .to_string()
+        })
+        .collect::<Vec<_>>();
+
+    let result = import_account_auth_json(contents).expect("import account auth json");
+
+    assert_eq!(result.total, 1000);
+    assert_eq!(result.created, 1000);
+    assert_eq!(result.updated, 0);
+    assert_eq!(result.failed, 0);
+    assert!(result.errors.is_empty());
+
+    let storage = Storage::open(&db_path).expect("reopen storage");
+    storage.init().expect("init reopened storage");
+    assert_eq!(storage.list_accounts().expect("list accounts").len(), 1000);
+
+    if let Some(value) = previous_db_path {
+        std::env::set_var("CODEXMANAGER_DB_PATH", value);
+    } else {
+        std::env::remove_var("CODEXMANAGER_DB_PATH");
+    }
+    if let Some(value) = previous_auto_refresh {
+        std::env::set_var("CODEXMANAGER_AUTO_USAGE_REFRESH_AFTER_ACCOUNT_ADD", value);
+    } else {
+        std::env::remove_var("CODEXMANAGER_AUTO_USAGE_REFRESH_AFTER_ACCOUNT_ADD");
+    }
+    if let Some(value) = previous_batch_size {
+        std::env::set_var("CODEXMANAGER_ACCOUNT_IMPORT_BATCH_SIZE", value);
+    } else {
+        std::env::remove_var("CODEXMANAGER_ACCOUNT_IMPORT_BATCH_SIZE");
+    }
+    let _ = std::fs::remove_file(db_path);
+}

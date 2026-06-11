@@ -9,6 +9,7 @@ use super::http::parse_http_body;
 const RPC_CONNECT_TIMEOUT: Duration = Duration::from_millis(400);
 const RPC_DEFAULT_IO_TIMEOUT: Duration = Duration::from_secs(10);
 const RPC_BULK_USAGE_REFRESH_IO_TIMEOUT: Duration = Duration::from_secs(600);
+const RPC_ACCOUNT_IMPORT_IO_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// 函数 `rpc_io_timeout`
 ///
@@ -23,6 +24,10 @@ const RPC_BULK_USAGE_REFRESH_IO_TIMEOUT: Duration = Duration::from_secs(600);
 /// # 返回
 /// 返回函数执行结果
 fn rpc_io_timeout(method: &str, params: Option<&serde_json::Value>) -> Duration {
+    if method == "account/import" {
+        return RPC_ACCOUNT_IMPORT_IO_TIMEOUT;
+    }
+
     if method == "account/usage/refresh"
         && params
             .and_then(|value| value.get("accountId"))
