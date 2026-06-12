@@ -196,6 +196,8 @@ pub struct AccountSummary {
     pub model_slugs: Vec<String>,
     pub quota_capacity_primary_window_tokens: Option<i64>,
     pub quota_capacity_secondary_window_tokens: Option<i64>,
+    #[serde(default)]
+    pub proxy_disabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -646,6 +648,8 @@ pub struct AggregateApiSummary {
     pub last_balance_json: Option<String>,
     #[serde(default)]
     pub model_slugs: Vec<String>,
+    #[serde(default)]
+    pub proxy_disabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

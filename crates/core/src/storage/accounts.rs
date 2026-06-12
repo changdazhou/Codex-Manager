@@ -316,6 +316,14 @@ impl Storage {
         Ok(())
     }
 
+    pub fn update_account_proxy_disabled(&self, account_id: &str, proxy_disabled: bool) -> Result<()> {
+        self.conn.execute(
+            "UPDATE accounts SET proxy_disabled = ?1, updated_at = ?2 WHERE id = ?3",
+            (proxy_disabled as i64, now_ts(), account_id),
+        )?;
+        Ok(())
+    }
+
     /// 函数 `update_account_status_if_changed`
     ///
     /// 作者: gaohongshun
@@ -405,6 +413,7 @@ impl Storage {
         self.ensure_column("accounts", "group_name", "TEXT")?;
         self.ensure_column("accounts", "sort", "INTEGER DEFAULT 0")?;
         self.ensure_column("accounts", "preferred", "INTEGER NOT NULL DEFAULT 0")?;
+        self.ensure_column("accounts", "proxy_disabled", "INTEGER NOT NULL DEFAULT 0")?;
         self.ensure_column("login_sessions", "note", "TEXT")?;
         self.ensure_column("login_sessions", "tags", "TEXT")?;
         self.ensure_column("login_sessions", "group_name", "TEXT")?;
@@ -722,6 +731,7 @@ fn account_select_columns(table_name: &str) -> String {
         "status",
         "created_at",
         "updated_at",
+        "proxy_disabled",
     ]
     .into_iter()
     .map(|column| qualified_column(table_name, column))
@@ -794,6 +804,7 @@ fn map_account_row_from_offset(row: &Row<'_>, offset: usize) -> Result<Account> 
         status: row.get(offset + 6)?,
         created_at: row.get(offset + 7)?,
         updated_at: row.get(offset + 8)?,
+        proxy_disabled: row.get::<_, i64>(offset + 9).unwrap_or(0) != 0,
     })
 }
 

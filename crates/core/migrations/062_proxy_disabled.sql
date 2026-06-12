@@ -1,0 +1,2 @@
+ALTER TABLE accounts ADD COLUMN proxy_disabled INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE aggregate_apis ADD COLUMN proxy_disabled INTEGER NOT NULL DEFAULT 0;

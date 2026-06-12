@@ -37,7 +37,11 @@ pub(super) fn execute<F>(
 where
     F: FnMut(Option<&str>, u16, Option<&str>),
 {
-    let client = super::super::super::upstream_client_for_account(account.id.as_str());
+    let client = if account.proxy_disabled {
+        super::super::super::no_proxy_upstream_client()
+    } else {
+        super::super::super::upstream_client_for_account(account.id.as_str())
+    };
 
     if deadline::is_expired(request_deadline) {
         return CandidateUpstreamDecision::Terminal {

@@ -708,6 +708,24 @@ export default function AggregateApiPage() {
     },
   });
 
+  const toggleProxyMutation = useMutation({
+    mutationFn: async ({ api, proxyDisabled }: { api: AggregateApi; proxyDisabled: boolean }) => {
+      await accountClient.updateAggregateApi(api.id, { proxyDisabled });
+    },
+    onSuccess: async (_result, variables) => {
+      queryClient.setQueryData<AggregateApi[]>(["aggregate-apis"], (current) =>
+        (current || []).map((item) =>
+          item.id === variables.api.id ? { ...item, proxyDisabled: variables.proxyDisabled } : item,
+        ),
+      );
+      await queryClient.invalidateQueries({ queryKey: ["aggregate-apis"] });
+      toast.success(t("代理设置已更新"));
+    },
+    onError: (error: unknown) => {
+      toast.error(`${t("更新代理设置失败")}: ${error instanceof Error ? error.message : String(error)}`);
+    },
+  });
+
   const syncModelPoolMutation = useMutation({
     mutationFn: (apiId: string) =>
       accountClient.syncManagedModelSourceModels({
@@ -1071,6 +1089,7 @@ export default function AggregateApiPage() {
                   <TableHead className="w-[64px] text-center">{t("顺序")}</TableHead>
                   <TableHead className="w-[130px]">{t("测试连通性")}</TableHead>
                   <TableHead className="w-[150px]">{t("余额")}</TableHead>
+                  <TableHead className="w-[72px] text-center">{t("代理")}</TableHead>
                   <TableHead className="w-[112px] text-right pr-4">{t("状态")}</TableHead>
                   <TableHead className="table-sticky-action-head w-[144px] text-center">
                     {t("操作")}
@@ -1100,6 +1119,9 @@ export default function AggregateApiPage() {
                         <Skeleton className="h-6 w-24 rounded-full" />
                       </TableCell>
                       <TableCell>
+                        <Skeleton className="mx-auto h-5 w-9 rounded-full" />
+                      </TableCell>
+                      <TableCell>
                         <Skeleton className="h-6 w-16 rounded-full" />
                       </TableCell>
                       <TableCell className="table-sticky-action-cell text-center">
@@ -1109,7 +1131,7 @@ export default function AggregateApiPage() {
                   ))
                 ) : filteredAggregateApis.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-48 text-center">
+                    <TableCell colSpan={9} className="h-48 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                         <ShieldCheck className="h-8 w-8 opacity-20" />
                         <p>
@@ -1399,6 +1421,17 @@ export default function AggregateApiPage() {
                               </TooltipContent>
                             </Tooltip>
                           ) : null}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            className="scale-75"
+                            checked={!api.proxyDisabled}
+                            disabled={!isServiceReady || (toggleProxyMutation.isPending && (toggleProxyMutation.variables as { api: AggregateApi } | undefined)?.api?.id === api.id)}
+                            onCheckedChange={(checked) =>
+                              toggleProxyMutation.mutate({ api, proxyDisabled: !checked })
+                            }
+                            title={api.proxyDisabled ? t("代理已禁用") : t("代理已启用")}
+                          />
                         </TableCell>
                         <TableCell className="align-middle pr-4">
                           <div className="flex items-center justify-end gap-2">

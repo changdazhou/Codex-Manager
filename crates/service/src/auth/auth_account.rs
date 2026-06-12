@@ -190,6 +190,10 @@ pub(crate) fn login_with_chatgpt_auth_tokens(
             .map(|account| account.created_at)
             .unwrap_or(now),
         updated_at: now,
+        proxy_disabled: existing_account
+            .as_ref()
+            .map(|a| a.proxy_disabled)
+            .unwrap_or(false),
     };
     storage
         .insert_account(&account)

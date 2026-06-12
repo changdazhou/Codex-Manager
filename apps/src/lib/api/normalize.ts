@@ -452,6 +452,7 @@ export function normalizeAccount(item: unknown, usage?: AccountUsage | null): Ac
       source.quotaCapacitySecondaryWindowTokens ??
         source.quota_capacity_secondary_window_tokens
     ),
+    proxyDisabled: Boolean(source.proxyDisabled ?? source.proxy_disabled),
     isAvailable: availability.level === "ok",
     isLowQuota: isLowQuotaUsage(usage),
     lastRefreshAt: usage?.capturedAt ?? null,
@@ -914,6 +915,7 @@ export function normalizeAggregateApi(item: unknown): AggregateApi | null {
     lastBalanceJson:
       asString(source.lastBalanceJson ?? source.last_balance_json) || null,
     modelSlugs: asStringArray(source.modelSlugs ?? source.model_slugs),
+    proxyDisabled: asBoolean(source.proxyDisabled ?? source.proxy_disabled, false),
   };
 }
 

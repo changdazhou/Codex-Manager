@@ -964,7 +964,11 @@ fn send_upstream_request_with_compression_override(
         Ok(r)
     } else if use_async_stream_transport {
         let async_client =
-            super::super::super::async_upstream_client_for_account(account.id.as_str());
+            if account.proxy_disabled {
+                super::super::super::no_proxy_async_upstream_client()
+            } else {
+                super::super::super::async_upstream_client_for_account(account.id.as_str())
+            };
         match send_async_stream_request(
             &async_client,
             method,

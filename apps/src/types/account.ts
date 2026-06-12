@@ -36,6 +36,7 @@ export interface Account {
   modelSlugs: string[];
   quotaCapacityPrimaryWindowTokens: number | null;
   quotaCapacitySecondaryWindowTokens: number | null;
+  proxyDisabled: boolean;
   isAvailable: boolean;
   isLowQuota: boolean;
   lastRefreshAt: number | null;

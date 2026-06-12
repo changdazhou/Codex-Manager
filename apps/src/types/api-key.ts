@@ -53,6 +53,7 @@ export interface AggregateApi {
   lastBalanceError: string | null;
   lastBalanceJson: string | null;
   modelSlugs: string[];
+  proxyDisabled: boolean;
 }
 
 export interface AggregateApiCreateResult {

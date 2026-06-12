@@ -1212,6 +1212,10 @@ pub(crate) fn complete_login_with_redirect(
         status: "active".to_string(),
         created_at,
         updated_at: now,
+        proxy_disabled: existing_account
+            .as_ref()
+            .map(|a| a.proxy_disabled)
+            .unwrap_or(false),
     };
     storage
         .insert_account(&account)

@@ -102,6 +102,7 @@ interface AccountUpdatePayload {
   modelSlugs?: string[] | null;
   quotaCapacityPrimaryWindowTokens?: number | null;
   quotaCapacitySecondaryWindowTokens?: number | null;
+  proxyDisabled?: boolean | null;
 }
 
 interface ChatgptAuthTokensLoginPayload {
@@ -217,6 +218,7 @@ interface AggregateApiPayload {
   balanceQueryUserId?: string | null;
   balanceQueryConfigJson?: string | null;
   modelSlugs?: string[] | null;
+  proxyDisabled?: boolean | null;
 }
 
 const MAX_IMPORT_RPC_BODY_BYTES = 4 * 1024 * 1024;
@@ -427,6 +429,7 @@ export const accountClient = {
           typeof params.quotaCapacitySecondaryWindowTokens === "number"
             ? params.quotaCapacitySecondaryWindowTokens
             : null,
+        proxyDisabled: typeof params.proxyDisabled === "boolean" ? params.proxyDisabled : null,
       })
     ),
   setPreferred: (accountId: string) =>
@@ -683,6 +686,7 @@ export const accountClient = {
             ? params.balanceQueryConfigJson
             : null,
         modelSlugs: Array.isArray(params.modelSlugs) ? params.modelSlugs : null,
+        proxyDisabled: typeof params.proxyDisabled === "boolean" ? params.proxyDisabled : null,
       })
     ),
   deleteAggregateApi: (apiId: string) =>

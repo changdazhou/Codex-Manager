@@ -25,6 +25,7 @@ struct AccountSummaryParts {
     group_name: Option<String>,
     sort: i64,
     status: String,
+    proxy_disabled: bool,
 }
 
 impl From<Account> for AccountSummaryParts {
@@ -35,6 +36,7 @@ impl From<Account> for AccountSummaryParts {
             group_name: account.group_name,
             sort: account.sort,
             status: account.status,
+            proxy_disabled: account.proxy_disabled,
         }
     }
 }
@@ -59,6 +61,7 @@ impl From<&Account> for AccountSummaryParts {
             group_name: account.group_name.clone(),
             sort: account.sort,
             status: account.status.clone(),
+            proxy_disabled: account.proxy_disabled,
         }
     }
 }
@@ -156,6 +159,7 @@ fn to_account_summary_with_reason(
         model_slugs,
         quota_capacity_primary_window_tokens,
         quota_capacity_secondary_window_tokens,
+        proxy_disabled: parts.proxy_disabled,
     }
 }
 
@@ -327,6 +331,7 @@ where
         group_name,
         sort,
         status,
+        proxy_disabled,
     } = account;
     let status_reason = status_reasons.get(&account_id).cloned();
     let preferred = preferred_account_id.is_some_and(|id| id == account_id);
@@ -356,6 +361,7 @@ where
             group_name,
             sort,
             status,
+            proxy_disabled,
         },
         preferred,
         status_reason,

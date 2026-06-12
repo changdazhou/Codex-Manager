@@ -854,7 +854,6 @@ pub(in super::super) fn proxy_aggregate_request(
         return Ok(());
     }
 
-    let client = super::super::super::fresh_upstream_client();
     let mut request = Some(request);
     let mut attempted_aggregate_api_ids = Vec::new();
     let mut last_attempt_url: Option<String> = None;
@@ -872,8 +871,14 @@ pub(in super::super) fn proxy_aggregate_request(
             aggregate_upstream_model_for_log(&candidate, model_for_log).map(str::to_string);
         let candidate_supplier_name = candidate.supplier_name.clone();
         let candidate_url = candidate.url.clone();
+        let candidate_proxy_disabled = candidate.proxy_disabled;
         last_attempt_id = Some(candidate_id.clone());
         last_attempt_upstream_model = candidate_upstream_model.clone();
+        let client = if candidate_proxy_disabled {
+            super::super::super::no_proxy_upstream_client()
+        } else {
+            super::super::super::fresh_upstream_client()
+        };
         let Some(secret) = storage
             .find_aggregate_api_secret_by_id(candidate.id.as_str())
             .map_err(|err| err.to_string())?

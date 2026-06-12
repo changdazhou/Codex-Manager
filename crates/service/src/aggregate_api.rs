@@ -2403,6 +2403,7 @@ pub(crate) fn list_aggregate_apis() -> Result<Vec<AggregateApiSummary>, String> 
             last_balance_status: item.last_balance_status,
             last_balance_error: item.last_balance_error,
             last_balance_json: item.last_balance_json,
+            proxy_disabled: item.proxy_disabled,
         })
         .collect())
 }
@@ -2661,6 +2662,7 @@ pub(crate) fn create_aggregate_api(
         last_balance_status: None,
         last_balance_error: None,
         last_balance_json: None,
+        proxy_disabled: false,
     };
     storage
         .insert_aggregate_api(&record)
@@ -2731,6 +2733,7 @@ pub(crate) fn update_aggregate_api(
     balance_query_user_id: Option<String>,
     balance_query_config_json: Option<String>,
     model_slugs: Option<Vec<String>>,
+    proxy_disabled: Option<bool>,
 ) -> Result<(), String> {
     if api_id.is_empty() {
         return Err("aggregate api id required".to_string());
@@ -2929,6 +2932,11 @@ pub(crate) fn update_aggregate_api(
     if let Some(model_slugs) = model_slugs {
         storage
             .set_quota_source_model_assignments("aggregate_api", api_id, model_slugs.as_slice())
+            .map_err(|err| err.to_string())?;
+    }
+    if let Some(proxy_disabled) = proxy_disabled {
+        storage
+            .update_aggregate_api_proxy_disabled(api_id, proxy_disabled)
             .map_err(|err| err.to_string())?;
     }
     Ok(())

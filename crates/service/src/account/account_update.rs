@@ -24,6 +24,7 @@ pub(crate) fn update_account(
     model_slugs: Option<Vec<String>>,
     quota_capacity_primary_window_tokens: Option<i64>,
     quota_capacity_secondary_window_tokens: Option<i64>,
+    proxy_disabled: Option<bool>,
 ) -> Result<(), String> {
     // 更新账号排序或状态并记录事件
     let normalized_account_id = account_id.trim();
@@ -47,6 +48,7 @@ pub(crate) fn update_account(
         && !metadata_requested
         && !model_assignment_requested
         && !quota_override_requested
+        && proxy_disabled.is_none()
     {
         return Err("missing account update fields".to_string());
     }
@@ -173,6 +175,12 @@ pub(crate) fn update_account(
             ),
             created_at: now,
         });
+    }
+
+    if let Some(proxy_disabled) = proxy_disabled {
+        storage
+            .update_account_proxy_disabled(normalized_account_id, proxy_disabled)
+            .map_err(|e| e.to_string())?;
     }
 
     Ok(())

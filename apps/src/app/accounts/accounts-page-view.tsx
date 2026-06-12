@@ -65,6 +65,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -215,6 +216,7 @@ export interface AccountsPageViewProps {
     enabled: boolean,
     currentStatus: string,
   ) => void;
+  toggleAccountProxyDisabled: (accountId: string, proxyDisabled: boolean) => void;
 }
 
 export function AccountsPageView(props: AccountsPageViewProps) {
@@ -317,6 +319,7 @@ export function AccountsPageView(props: AccountsPageViewProps) {
     clearPreferredAccount,
     setPreferredAccount,
     toggleAccountStatus,
+    toggleAccountProxyDisabled,
   } = props;
   const cleanupSelectedCount = cleanupStatusOptions.reduce(
     (total, option) =>
@@ -785,6 +788,7 @@ export function AccountsPageView(props: AccountsPageViewProps) {
                   {t("额度详情")}
                 </TableHead>
                 <TableHead className="w-[156px]">{t("顺序")}</TableHead>
+                <TableHead className="w-[80px] text-center">{t("代理")}</TableHead>
                 <TableHead>{t("状态")}</TableHead>
                 <TableHead className="table-sticky-action-head w-[112px] text-center">
                   {t("操作")}
@@ -810,6 +814,9 @@ export function AccountsPageView(props: AccountsPageViewProps) {
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-4 w-10" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="mx-auto h-5 w-9 rounded-full" />
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-6 w-16 rounded-full" />
@@ -959,6 +966,19 @@ export function AccountsPageView(props: AccountsPageViewProps) {
                             <PencilLine className="h-3.5 w-3.5" />
                           </Button>
                         </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={!account.proxyDisabled}
+                          disabled={
+                            !isServiceReady ||
+                            isUpdatingProfileAccountId === account.id
+                          }
+                          onCheckedChange={(checked) =>
+                            toggleAccountProxyDisabled(account.id, !checked)
+                          }
+                          title={account.proxyDisabled ? t("代理已禁用") : t("代理已启用")}
+                        />
                       </TableCell>
                       <TableCell>
                         <AccountStatusCell account={account} />

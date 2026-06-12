@@ -316,6 +316,30 @@ pub(crate) fn apply_async_upstream_proxy(
     }
     builder
 }
+
+pub(crate) fn build_no_proxy_upstream_client() -> Client {
+    Client::builder()
+        .timeout(None::<Duration>)
+        .connect_timeout(upstream_connect_timeout_cached())
+        .pool_max_idle_per_host(32)
+        .pool_idle_timeout(Some(Duration::from_secs(90)))
+        .tcp_keepalive(Some(Duration::from_secs(30)))
+        .no_proxy()
+        .build()
+        .unwrap_or_else(|_| Client::new())
+}
+
+pub(crate) fn build_no_proxy_async_upstream_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .connect_timeout(upstream_connect_timeout_cached())
+        .pool_max_idle_per_host(32)
+        .pool_idle_timeout(Some(Duration::from_secs(90)))
+        .tcp_keepalive(Some(Duration::from_secs(30)))
+        .no_proxy()
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new())
+}
+
 /// 函数 `build_upstream_client_with_proxy`
 ///
 /// 作者: gaohongshun

@@ -615,6 +615,7 @@ export function useAccounts() {
       modelSlugs,
       quotaCapacityPrimaryWindowTokens,
       quotaCapacitySecondaryWindowTokens,
+      proxyDisabled,
     }: {
       accountId: string;
       label?: string | null;
@@ -624,6 +625,7 @@ export function useAccounts() {
       modelSlugs?: string[] | null;
       quotaCapacityPrimaryWindowTokens?: number | null;
       quotaCapacitySecondaryWindowTokens?: number | null;
+      proxyDisabled?: boolean | null;
     }) =>
       accountClient.updateProfile(accountId, {
         label,
@@ -633,6 +635,7 @@ export function useAccounts() {
         modelSlugs,
         quotaCapacityPrimaryWindowTokens,
         quotaCapacitySecondaryWindowTokens,
+        proxyDisabled,
       }),
     onSuccess: async () => {
       await invalidateAccountData();
@@ -901,6 +904,7 @@ export function useAccounts() {
         modelSlugs?: string[] | null;
         quotaCapacityPrimaryWindowTokens?: number | null;
         quotaCapacitySecondaryWindowTokens?: number | null;
+        proxyDisabled?: boolean | null;
       }
     ) => {
       if (!ensureServiceReady("更新账号信息")) return;
@@ -913,6 +917,10 @@ export function useAccounts() {
     ) => {
       if (!ensureServiceReady(enabled ? "启用账号" : "禁用账号")) return;
       toggleAccountStatusMutation.mutate({ accountId, enabled, sourceStatus });
+    },
+    toggleAccountProxyDisabled: (accountId: string, proxyDisabled: boolean) => {
+      if (!ensureServiceReady("更新代理设置")) return;
+      updateAccountProfileMutation.mutate({ accountId, proxyDisabled });
     },
     isRefreshingAccountId:
       refreshAccountMutation.isPending && typeof refreshAccountMutation.variables === "string"

@@ -38,6 +38,7 @@ pub struct Account {
     pub status: String,
     pub created_at: i64,
     pub updated_at: i64,
+    pub proxy_disabled: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -536,6 +537,7 @@ pub struct AggregateApi {
     pub last_balance_status: Option<String>,
     pub last_balance_error: Option<String>,
     pub last_balance_json: Option<String>,
+    pub proxy_disabled: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -1020,29 +1022,18 @@ impl Storage {
         self.apply_compat_migration("063_account_subscriptions_account_plan_type", |s| {
             s.ensure_account_subscriptions_table()
         })?;
-        self.apply_sql_migration(
-            "064_drop_gateway_error_logs",
-            include_str!("../../migrations/064_drop_gateway_error_logs.sql"),
-        )?;
-        self.apply_sql_or_compat_migration(
-            "065_model_source_mapping_preferences",
-            include_str!("../../migrations/065_model_source_mapping_preferences.sql"),
-            |s| s.ensure_model_source_tables(),
-        )?;
-        self.apply_sql_or_compat_migration(
-            "066_request_logs_service_tier_source",
-            include_str!("../../migrations/066_request_logs_service_tier_source.sql"),
-            |s| s.ensure_request_log_service_tier_source_column(),
-        )?;
-        self.apply_sql_or_compat_migration(
-            "067_request_logs_model_reasoning_sources",
-            include_str!("../../migrations/067_request_logs_model_reasoning_sources.sql"),
-            |s| s.ensure_request_log_model_reasoning_source_columns(),
-        )?;
         self.apply_sql_or_compat_migration(
             "068_request_logs_route_strategy_source",
             include_str!("../../migrations/068_request_logs_route_strategy_source.sql"),
             |s| s.ensure_request_log_route_strategy_columns(),
+        )?;
+        self.apply_sql_or_compat_migration(
+            "069_proxy_disabled",
+            include_str!("../../migrations/062_proxy_disabled.sql"),
+            |s| {
+                s.ensure_account_meta_columns()?;
+                s.ensure_aggregate_apis_table()
+            },
         )?;
         self.ensure_api_key_rotation_columns()?;
         self.ensure_aggregate_apis_table()?;

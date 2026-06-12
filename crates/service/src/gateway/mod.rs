@@ -393,6 +393,8 @@ use runtime_config::{
     upstream_client_for_account, upstream_stream_timeout, upstream_total_timeout,
     DEFAULT_GATEWAY_DEBUG,
 };
+pub(crate) use runtime_config::build_no_proxy_upstream_client as no_proxy_upstream_client;
+pub(crate) use runtime_config::build_no_proxy_async_upstream_client as no_proxy_async_upstream_client;
 use selection::collect_gateway_candidates;
 pub(crate) use selection::{
     collect_gateway_candidates_with_low_quota_mode, current_quota_guard_config,

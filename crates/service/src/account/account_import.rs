@@ -838,6 +838,7 @@ fn import_single_item_with_account_id(
                 status: "active".to_string(),
                 created_at: existing.created_at,
                 updated_at: now,
+                proxy_disabled: existing.proxy_disabled,
             };
             (existing.id.clone(), updated, false)
         } else {
@@ -854,6 +855,7 @@ fn import_single_item_with_account_id(
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             };
             (account_id.clone(), created, true)
         };

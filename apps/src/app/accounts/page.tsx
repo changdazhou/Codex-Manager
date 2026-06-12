@@ -82,6 +82,7 @@ export default function AccountsPage() {
     isUpdatingProfileAccountId,
     toggleAccountStatus,
     isUpdatingStatusAccountId,
+    toggleAccountProxyDisabled,
   } = useAccounts();
   const isPageActive = useDesktopPageActive("/accounts/");
   usePageTransitionReady("/accounts/", !isServiceReady || !isLoading);
@@ -713,6 +714,7 @@ const toggleCleanupStatus = (rawStatus: string) => {
       clearPreferredAccount={clearPreferredAccount}
       setPreferredAccount={setPreferredAccount}
       toggleAccountStatus={toggleAccountStatus}
+      toggleAccountProxyDisabled={toggleAccountProxyDisabled}
     />
   );
 }
