@@ -52,6 +52,7 @@ fn gateway_usage_limit_in_sse_marks_request_as_failover() {
                 status: "active".to_string(),
                 created_at: now + sort,
                 updated_at: now + sort,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage
@@ -208,6 +209,7 @@ fn gateway_low_quota_account_is_skipped_on_first_request() {
                 status: "active".to_string(),
                 created_at: now + *sort,
                 updated_at: now + *sort,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage

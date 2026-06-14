@@ -26,6 +26,7 @@ fn resolve_openai_bearer_token_uses_cached_storage_value() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
     storage

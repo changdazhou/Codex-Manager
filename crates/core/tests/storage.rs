@@ -31,6 +31,7 @@ fn storage_can_insert_account_and_token() {
         status: "healthy".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
 
@@ -75,6 +76,7 @@ fn storage_can_find_token_and_account_by_account_id() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
 
@@ -298,6 +300,7 @@ fn delete_account_removes_openai_model_source_routes() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -370,6 +373,7 @@ fn token_upsert_keeps_refresh_schedule_columns() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
 
@@ -434,6 +438,7 @@ fn tokens_due_for_refresh_uses_access_exp_when_next_refresh_is_stale() {
         status: "active".to_string(),
         created_at: now,
         updated_at: now,
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
     storage
@@ -497,6 +502,7 @@ fn tokens_due_for_refresh_include_other_unavailable_accounts_but_skip_deactivate
                 status: status.to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage
@@ -629,6 +635,7 @@ fn storage_account_metadata_roundtrip_and_delete_cleanup() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
     storage
@@ -678,6 +685,7 @@ fn storage_account_subscription_roundtrip_and_delete_cleanup() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
     storage
@@ -735,6 +743,7 @@ fn storage_can_update_account_status() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
 
@@ -779,6 +788,7 @@ fn storage_updates_account_status_only_when_changed() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert account");
 
@@ -838,6 +848,7 @@ fn storage_gateway_candidates_exclude_unavailable_or_missing_token_accounts() {
                 status: status.to_string(),
                 created_at: now + sort,
                 updated_at: now + sort,
+                proxy_disabled: false,
             })
             .expect("insert account");
     }
@@ -1031,6 +1042,7 @@ fn request_logs_support_prefixed_query_filters() {
                 status: "active".to_string(),
                 created_at: now_ts(),
                 updated_at: now_ts(),
+                proxy_disabled: false,
             })
             .expect("insert account");
     }
@@ -1445,6 +1457,7 @@ fn request_token_stats_rollups_use_owner_and_actual_source_precedence() {
                 status: "active".to_string(),
                 created_at: base,
                 updated_at: base,
+                proxy_disabled: false,
             })
             .expect("insert account");
     }
@@ -1476,6 +1489,11 @@ fn request_token_stats_rollups_use_owner_and_actual_source_precedence() {
                 last_balance_status: None,
                 last_balance_error: None,
                 last_balance_json: None,
+                extra_headers_json: None,
+                model_map_json: None,
+                proxy_disabled: false,
+                extra_headers_json: None,
+                model_map_json: None,
             })
             .expect("insert aggregate api");
     }

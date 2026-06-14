@@ -2269,6 +2269,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
     }
@@ -2301,6 +2302,9 @@ mod tests {
                 last_balance_status: None,
                 last_balance_error: None,
                 last_balance_json: None,
+                proxy_disabled: false,
+                extra_headers_json: None,
+                model_map_json: None,
             })
             .expect("insert aggregate api");
     }
@@ -3847,6 +3851,9 @@ mod tests {
                 last_balance_status: None,
                 last_balance_error: None,
                 last_balance_json: None,
+                proxy_disabled: false,
+                extra_headers_json: None,
+                model_map_json: None,
             })
             .expect("insert disabled aggregate api");
 

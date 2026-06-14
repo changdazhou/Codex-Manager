@@ -116,6 +116,8 @@ impl RpcTestContext {
                     status: "active".to_string(),
                     created_at: now + sort,
                     updated_at: now + sort,
+                    proxy_disabled: false,
+                    proxy_disabled: false,
                 })
                 .expect("insert account");
         }
@@ -717,6 +719,8 @@ fn rpc_account_list_includes_account_plan_type() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -785,6 +789,8 @@ fn rpc_account_list_prefers_free_subscription_result_over_token_plan() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -868,6 +874,8 @@ fn rpc_account_list_prefers_accounts_check_plan_over_subscription_plan() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -1167,6 +1175,8 @@ fn rpc_account_delete_unavailable_free_removes_refresh_invalid_free_accounts() {
             status: "unavailable".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert banned free account");
     storage
@@ -1210,6 +1220,8 @@ fn rpc_account_delete_unavailable_free_removes_refresh_invalid_free_accounts() {
             status: "unavailable".to_string(),
             created_at: now + 1,
             updated_at: now + 1,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert unavailable free account");
     storage
@@ -1245,6 +1257,8 @@ fn rpc_account_delete_unavailable_free_removes_refresh_invalid_free_accounts() {
             status: "unavailable".to_string(),
             created_at: now + 1,
             updated_at: now + 1,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert unavailable pro account");
     storage
@@ -1340,6 +1354,8 @@ fn rpc_account_delete_by_statuses_deletes_only_selected_statuses() {
                 status: status.to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
+                proxy_disabled: false,
             })
             .expect("insert account");
     }
@@ -1428,6 +1444,8 @@ fn rpc_account_delete_by_statuses_deletes_unknown_status() {
                 status: status.to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
+                proxy_disabled: false,
             })
             .expect("insert account");
     }
@@ -2368,6 +2386,8 @@ fn rpc_usage_aggregate_returns_backend_summary() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
+            proxy_disabled: false,
         })
         .expect("insert pro account");
     storage
@@ -2382,6 +2402,7 @@ fn rpc_usage_aggregate_returns_backend_summary() {
             status: "active".to_string(),
             created_at: now + 1,
             updated_at: now + 1,
+            proxy_disabled: false,
         })
         .expect("insert free account");
 

@@ -483,6 +483,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 0,
             updated_at: 0,
+            proxy_disabled: false,
         };
         let second = Account {
             id: "acc-2".to_string(),
@@ -495,6 +496,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 0,
             updated_at: 0,
+            proxy_disabled: false,
         };
 
         assert!(!state.strip_session_affinity(&first, 0, true));
@@ -515,6 +517,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 0,
             updated_at: 0,
+            proxy_disabled: false,
         };
         let second = Account {
             id: "acc-2".to_string(),
@@ -527,6 +530,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 0,
             updated_at: 0,
+            proxy_disabled: false,
         };
 
         assert!(!state.strip_session_affinity(&first, 0, true));

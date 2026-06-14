@@ -804,7 +804,7 @@ fn map_account_row_from_offset(row: &Row<'_>, offset: usize) -> Result<Account> 
         status: row.get(offset + 6)?,
         created_at: row.get(offset + 7)?,
         updated_at: row.get(offset + 8)?,
-        proxy_disabled: row.get::<_, i64>(offset + 9).unwrap_or(0) != 0,
+        proxy_disabled: row.get::<_, Option<i64>>(offset + 9).unwrap_or(None).unwrap_or(0) != 0,
     })
 }
 
@@ -844,7 +844,7 @@ fn map_token_row_from_offset(row: &Row<'_>, offset: usize) -> Result<Token> {
 /// 返回函数执行结果
 fn map_gateway_candidate_row(row: &Row<'_>) -> Result<(Account, Token)> {
     let account = map_account_row_from_offset(row, 0)?;
-    let token = map_token_row_from_offset(row, 9)?;
+    let token = map_token_row_from_offset(row, 10)?;
     Ok((account, token))
 }
 
@@ -865,6 +865,7 @@ mod tests {
             status: status.to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         }
     }
 
@@ -1030,3 +1031,4 @@ mod tests {
         assert_eq!(storage.preferred_account_id().expect("no preferred"), None);
     }
 }
+

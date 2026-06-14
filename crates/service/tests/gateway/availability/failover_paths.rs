@@ -26,6 +26,7 @@ fn failover_on_missing_usage() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
     let record = UsageSnapshotRecord {

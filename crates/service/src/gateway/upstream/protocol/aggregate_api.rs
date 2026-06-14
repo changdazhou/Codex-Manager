@@ -111,6 +111,32 @@ fn build_upstream_url(base_url: &str, effective_path: &str) -> Result<reqwest::U
     Ok(url)
 }
 
+fn apply_model_map(body: &Bytes, model_map_json: Option<&str>) -> Bytes {
+    let Some(map_json) = model_map_json else {
+        return body.clone();
+    };
+    let Ok(map) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(map_json)
+    else {
+        return body.clone();
+    };
+    let Ok(mut value) = serde_json::from_slice::<Value>(body.as_ref()) else {
+        return body.clone();
+    };
+    let Some(object) = value.as_object_mut() else {
+        return body.clone();
+    };
+    if let Some(model) = object.get("model").and_then(Value::as_str) {
+        if let Some(mapped) = map.get(model).and_then(Value::as_str) {
+            let mapped = mapped.to_string();
+            object.insert("model".to_string(), Value::String(mapped));
+            return serde_json::to_vec(&value)
+                .map(Bytes::from)
+                .unwrap_or_else(|_| body.clone());
+        }
+    }
+    body.clone()
+}
+
 fn rewrite_body_model_override(body: &Bytes, model_override: Option<&str>) -> Bytes {
     let Some(model_override) = model_override
         .map(str::trim)
@@ -579,6 +605,7 @@ fn build_aggregate_api_request(
     secret: &str,
     auth_config: &AggregateApiAuthConfig,
     injected_headers: &HashSet<String>,
+    extra_headers_json: Option<&str>,
     request_deadline: Option<Instant>,
     is_stream: bool,
 ) -> Result<reqwest::blocking::RequestBuilder, String> {
@@ -671,6 +698,21 @@ fn build_aggregate_api_request(
     if !body.is_empty() {
         builder = builder.body(body.clone());
     }
+    // Inject extra headers after auth (so they can override if needed)
+    if let Some(raw) = extra_headers_json.map(str::trim).filter(|v| !v.is_empty()) {
+        if let Ok(map) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(raw) {
+            for (key, val) in &map {
+                if let Some(value) = val.as_str() {
+                    if let (Ok(name), Ok(hval)) = (
+                        HeaderName::from_bytes(key.trim().as_bytes()),
+                        HeaderValue::from_str(value.trim()),
+                    ) {
+                        builder = builder.header(name, hval);
+                    }
+                }
+            }
+        }
+    }
     Ok(builder)
 }
 
@@ -683,6 +725,7 @@ fn build_anthropic_bridge_aggregate_api_request(
     secret: &str,
     auth_config: &AggregateApiAuthConfig,
     injected_headers: &HashSet<String>,
+    extra_headers_json: Option<&str>,
     request_deadline: Option<Instant>,
     is_stream: bool,
 ) -> Result<reqwest::blocking::RequestBuilder, String> {
@@ -695,6 +738,7 @@ fn build_anthropic_bridge_aggregate_api_request(
         secret,
         auth_config,
         injected_headers,
+        extra_headers_json,
         request_deadline,
         is_stream,
     )?;
@@ -1003,8 +1047,10 @@ pub(in super::super) fn proxy_aggregate_request(
                 _ => {}
             }
 
-            let rewritten_body =
-                rewrite_body_model_override(body, candidate.model_override.as_deref());
+            let rewritten_body = {
+                let after_map = apply_model_map(body, candidate.model_map_json.as_deref());
+                rewrite_body_model_override(&after_map, candidate.model_override.as_deref())
+            };
             let upstream_body = if bridge_responses_to_anthropic {
                 Bytes::from(adapt_openai_responses_to_anthropic_messages(
                     rewritten_body.as_ref(),
@@ -1024,6 +1070,7 @@ pub(in super::super) fn proxy_aggregate_request(
                     secret.as_str(),
                     &auth_config,
                     &injected_headers,
+                    candidate.extra_headers_json.as_deref(),
                     request_deadline,
                     is_stream,
                 )?
@@ -1037,6 +1084,7 @@ pub(in super::super) fn proxy_aggregate_request(
                     secret.as_str(),
                     &auth_config,
                     &injected_headers,
+                    candidate.extra_headers_json.as_deref(),
                     request_deadline,
                     is_stream,
                 )?
@@ -1340,6 +1388,9 @@ mod bridge_tests {
             last_balance_status: None,
             last_balance_error: None,
             last_balance_json: None,
+            proxy_disabled: false,
+            extra_headers_json: None,
+            model_map_json: None,
         }
     }
 
@@ -1521,6 +1572,9 @@ mod tests {
             last_balance_status: None,
             last_balance_error: None,
             last_balance_json: None,
+            proxy_disabled: false,
+            extra_headers_json: None,
+            model_map_json: None,
         }
     }
 
@@ -1719,6 +1773,9 @@ mod tests {
                     last_balance_status: None,
                     last_balance_error: None,
                     last_balance_json: None,
+                    proxy_disabled: false,
+                    extra_headers_json: None,
+                    model_map_json: None,
                 })
                 .expect("insert aggregate api");
         }

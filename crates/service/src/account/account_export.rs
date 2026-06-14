@@ -454,6 +454,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 0,
             updated_at: 0,
+            proxy_disabled: false,
         }
     }
 

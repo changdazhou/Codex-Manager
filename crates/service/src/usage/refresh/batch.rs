@@ -544,6 +544,7 @@ mod tests {
             status: status.to_string(),
             created_at: now_ts(),
             updated_at: now_ts(),
+            proxy_disabled: false,
         }
     }
 
@@ -595,6 +596,9 @@ mod tests {
             last_balance_status: None,
             last_balance_error: None,
             last_balance_json: None,
+            proxy_disabled: false,
+            extra_headers_json: None,
+            model_map_json: None,
         }
     }
 

@@ -25,6 +25,7 @@ fn candidate_list() -> Vec<(Account, Token)> {
                 status: "active".to_string(),
                 created_at: 0,
                 updated_at: 0,
+                proxy_disabled: false,
             },
             Token {
                 account_id: "acc-a".to_string(),
@@ -47,6 +48,7 @@ fn candidate_list() -> Vec<(Account, Token)> {
                 status: "active".to_string(),
                 created_at: 0,
                 updated_at: 0,
+                proxy_disabled: false,
             },
             Token {
                 account_id: "acc-b".to_string(),
@@ -69,6 +71,7 @@ fn candidate_list() -> Vec<(Account, Token)> {
                 status: "active".to_string(),
                 created_at: 0,
                 updated_at: 0,
+                proxy_disabled: false,
             },
             Token {
                 account_id: "acc-c".to_string(),
@@ -560,6 +563,7 @@ fn persisted_preferred_account_rotates_to_head() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
     }

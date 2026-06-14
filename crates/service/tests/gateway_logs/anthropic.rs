@@ -57,6 +57,7 @@ fn gateway_claude_protocol_rewrites_messages_path_with_sticky_prompt_cache_key()
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -208,6 +209,9 @@ fn gateway_aggregate_messages_passthrough_accepts_message_stop_for_non_claude_pr
             last_balance_status: None,
             last_balance_error: None,
             last_balance_json: None,
+            proxy_disabled: false,
+            extra_headers_json: None,
+            model_map_json: None,
         })
         .expect("insert aggregate api");
     storage
@@ -379,6 +383,9 @@ fn gateway_aggregate_responses_bridge_adds_anthropic_headers_and_messages_path()
             last_balance_status: None,
             last_balance_error: None,
             last_balance_json: None,
+            proxy_disabled: false,
+            extra_headers_json: None,
+            model_map_json: None,
         })
         .expect("insert aggregate api");
     storage
@@ -539,6 +546,7 @@ fn gateway_claude_messages_stay_on_chatgpt_codex_base() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -666,6 +674,7 @@ fn gateway_claude_protocol_end_to_end_uses_codex_headers() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -871,6 +880,7 @@ fn gateway_claude_failover_cross_workspace_strips_session_affinity_headers() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account wsA");
     storage
@@ -896,6 +906,7 @@ fn gateway_claude_failover_cross_workspace_strips_session_affinity_headers() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account wsB");
     storage
@@ -1089,6 +1100,7 @@ fn gateway_claude_failover_same_workspace_preserves_session_affinity_headers() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account wsSame");
         storage

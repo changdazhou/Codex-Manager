@@ -369,6 +369,7 @@ fn token_refresh_issuer_uses_account_issuer() {
         status: "active".to_string(),
         created_at: now,
         updated_at: now,
+        proxy_disabled: false,
     };
 
     assert_eq!(
@@ -402,6 +403,7 @@ fn token_refresh_issuer_falls_back_to_default() {
         status: "active".to_string(),
         created_at: now,
         updated_at: now,
+        proxy_disabled: false,
     };
 
     assert_eq!(

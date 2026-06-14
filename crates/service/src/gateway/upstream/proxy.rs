@@ -180,6 +180,14 @@ fn model_route_error(
             .map_err(|err| (500, format!("source_model_read_failed: {err}")))?
     };
     if !has_upstream_source_match {
+        // For aggregate-api and hybrid routes, skip the pre-flight model validation —
+        // model_map_json translation handles the mapping at request time.
+        if matches!(
+            execution_plan.route_kind,
+            GatewayUpstreamRouteKind::HybridAccountFirst | GatewayUpstreamRouteKind::AggregateApi
+        ) {
+            return Ok(());
+        }
         return Err((503, format!("model_unavailable: {model}")));
     }
     Ok(())
@@ -347,16 +355,20 @@ fn resolve_aggregate_candidates_for_route(
     candidates = candidates
         .into_iter()
         .filter_map(|mut api| {
-            let mapping = storage
+            if let Some(mapping) = storage
                 .find_enabled_model_source_mapping(model, "aggregate_api", api.id.as_str())
                 .ok()
-                .flatten()?;
-            api.model_override = Some(mapping.upstream_model);
+                .flatten()
+            {
+                api.model_override = Some(mapping.upstream_model);
+            }
+            // If no explicit mapping exists, still include the candidate so
+            // model_map_json or model_override on the api can handle translation.
             Some(api)
         })
         .collect();
     if candidates.is_empty() {
-        Err(format!("model_unavailable: {model}"))
+        Err(format!("aggregate api not found for provider (model: {model})"))
     } else {
         Ok(candidates)
     }
@@ -522,6 +534,7 @@ fn proxy_with_aggregate_candidates(
     method: &reqwest::Method,
     body: &bytes::Bytes,
     client_is_stream: bool,
+    response_adapter: super::super::ResponseAdapter,
     gateway_mode_for_log: Option<&str>,
     client_model_for_log: Option<&str>,
     model_for_log: Option<&str>,
@@ -557,7 +570,7 @@ fn proxy_with_aggregate_candidates(
             method,
             body,
             is_stream: client_is_stream,
-            response_adapter: super::super::ResponseAdapter::Passthrough,
+            response_adapter,
             gateway_mode_for_log,
             route_strategy_for_log: Some(super::super::current_route_strategy()),
             route_source_for_log: Some(if aggregate_api_id.is_some() {
@@ -729,6 +742,7 @@ pub(in super::super) fn proxy_validated_request(
                     &method,
                     &body,
                     client_is_stream,
+                    response_adapter,
                     gateway_mode_for_log.as_deref(),
                     client_model_for_log.as_deref(),
                     model_for_log.as_deref(),
@@ -754,7 +768,7 @@ pub(in super::super) fn proxy_validated_request(
                     original_path.as_str(),
                     path.as_str(),
                     request_method.as_str(),
-                    super::super::ResponseAdapter::Passthrough,
+                    response_adapter,
                     service_tier_for_log.as_deref(),
                     effective_service_tier_for_log.as_deref(),
                     service_tier_source_for_log.as_deref(),
@@ -810,6 +824,7 @@ pub(in super::super) fn proxy_validated_request(
                         &method,
                         &passthrough_body,
                         client_is_stream,
+                        response_adapter,
                         gateway_mode_for_log.as_deref(),
                         client_model_for_log.as_deref(),
                         model_for_log.as_deref(),
@@ -835,7 +850,7 @@ pub(in super::super) fn proxy_validated_request(
                         original_path.as_str(),
                         passthrough_path.as_str(),
                         request_method.as_str(),
-                        super::super::ResponseAdapter::Passthrough,
+                        response_adapter,
                         service_tier_for_log.as_deref(),
                         effective_service_tier_for_log.as_deref(),
                         service_tier_source_for_log.as_deref(),
@@ -984,6 +999,7 @@ pub(in super::super) fn proxy_validated_request(
                     &method,
                     &passthrough_body,
                     client_is_stream,
+                    response_adapter,
                     gateway_mode_for_log.as_deref(),
                     client_model_for_log.as_deref(),
                     model_for_log.as_deref(),
@@ -1009,7 +1025,7 @@ pub(in super::super) fn proxy_validated_request(
                     original_path.as_str(),
                     passthrough_path.as_str(),
                     request_method.as_str(),
-                    super::super::ResponseAdapter::Passthrough,
+                    response_adapter,
                     service_tier_for_log.as_deref(),
                     effective_service_tier_for_log.as_deref(),
                     service_tier_source_for_log.as_deref(),
@@ -1099,6 +1115,9 @@ mod tests {
                 last_balance_status: None,
                 last_balance_error: None,
                 last_balance_json: None,
+                proxy_disabled: false,
+                extra_headers_json: None,
+                model_map_json: None,
             })
             .expect("insert aggregate api");
     }
@@ -1420,6 +1439,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage

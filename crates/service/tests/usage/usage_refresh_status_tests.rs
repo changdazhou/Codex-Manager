@@ -57,6 +57,7 @@ fn apply_status_missing_snapshot_keeps_account_status() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -110,6 +111,7 @@ fn apply_status_skips_db_and_event_when_status_unchanged() {
         status: "inactive".to_string(),
         created_at: base_updated_at,
         updated_at: base_updated_at,
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -184,6 +186,7 @@ fn apply_status_exhausted_snapshot_marks_account_limited() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -246,6 +249,7 @@ fn apply_status_available_snapshot_recovers_limited_account_to_active() {
         status: "limited".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -305,6 +309,7 @@ fn mark_usage_unreachable_marks_401_403_as_unavailable_but_ignores_429() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -469,6 +474,7 @@ fn mark_usage_unreachable_does_not_override_manual_disabled_status() {
             status: "disabled".to_string(),
             created_at: now_ts(),
             updated_at: now_ts(),
+            proxy_disabled: false,
         })
         .expect("insert");
 
@@ -512,6 +518,7 @@ fn apply_status_available_preserves_manual_disabled_status() {
             status: "disabled".to_string(),
             created_at: base_updated_at,
             updated_at: base_updated_at,
+            proxy_disabled: false,
         })
         .expect("insert");
 
@@ -556,6 +563,7 @@ fn apply_status_available_preserves_region_blocked_status() {
             status: "active".to_string(),
             created_at: base_updated_at,
             updated_at: base_updated_at,
+            proxy_disabled: false,
         })
         .expect("insert");
     set_account_status(
@@ -620,6 +628,7 @@ fn refresh_token_auth_error_marks_account_unavailable() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -661,6 +670,7 @@ fn refresh_token_forbidden_without_invalid_grant_keeps_account_active() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -691,6 +701,7 @@ fn refresh_token_region_blocked_forbidden_marks_account_unavailable() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -741,6 +752,7 @@ fn refresh_token_invalid_grant_on_forbidden_keeps_account_active() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -782,6 +794,7 @@ fn refresh_token_invalid_grant_on_bad_request_marks_account_unavailable() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -812,6 +825,7 @@ fn refresh_token_app_session_terminated_on_bad_request_marks_account_unavailable
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -862,6 +876,7 @@ fn refresh_token_unknown_401_marks_account_unavailable() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -942,6 +957,7 @@ fn deactivation_error_marks_account_banned() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -983,6 +999,7 @@ fn generic_deactivated_error_marks_account_banned() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -1032,6 +1049,7 @@ fn auth_error_deactivated_marks_account_banned() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -1083,6 +1101,7 @@ fn deactivation_error_updates_reason_for_existing_unavailable_account() {
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     };
     storage.insert_account(&account).expect("insert");
 
@@ -1142,6 +1161,7 @@ fn deactivation_error_preserves_manual_disabled_status() {
             status: "disabled".to_string(),
             created_at: now_ts(),
             updated_at: now_ts(),
+            proxy_disabled: false,
         })
         .expect("insert");
 

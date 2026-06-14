@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DollarSign,
   Copy,
+  Download,
   Eye,
   EyeOff,
   ExternalLink,
@@ -352,6 +353,37 @@ export default function ApiKeysPage() {
   const showOverviewLoading =
     isServiceReady && isPageActive && isUsageOverviewLoading;
 
+  const exportApiKeys = async () => {
+    const items = await Promise.all(
+      (apiKeys || []).map(async (key) => {
+        let secret: string | null = null;
+        try {
+          secret = await accountClient.readApiKeySecret(key.id);
+        } catch {
+          // ignore
+        }
+        return {
+          id: key.id,
+          name: key.name,
+          secret,
+          model: key.model,
+          rotationStrategy: key.rotationStrategy,
+          protocol: key.protocol,
+          status: key.status,
+        };
+      })
+    );
+    const blob = new Blob([JSON.stringify(items, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "platform-keys.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   /**
    * 函数 `openCreateModal`
    *
@@ -611,6 +643,15 @@ export default function ApiKeysPage() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button
+            variant="outline"
+            className="glass-card h-10 gap-2 rounded-xl px-3 shadow-sm"
+            onClick={() => void exportApiKeys()}
+            disabled={!isServiceReady || !apiKeys?.length}
+          >
+            <Download className="h-4 w-4" />
+            {t("导出")}
+          </Button>
           <Button
             className="h-10 gap-2 shadow-sm shadow-primary/20"
             onClick={openCreateModal}

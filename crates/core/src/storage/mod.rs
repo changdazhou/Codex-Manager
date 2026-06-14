@@ -538,6 +538,8 @@ pub struct AggregateApi {
     pub last_balance_error: Option<String>,
     pub last_balance_json: Option<String>,
     pub proxy_disabled: bool,
+    pub extra_headers_json: Option<String>,
+    pub model_map_json: Option<String>,
 }
 
 #[derive(Debug, Clone)]

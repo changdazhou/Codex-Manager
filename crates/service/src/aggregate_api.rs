@@ -204,7 +204,7 @@ fn normalize_model_override(value: Option<String>) -> Result<Option<String>, Str
     }
     if trimmed
         .chars()
-        .any(|ch| !(ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.' | '/' | ':')))
+        .any(|ch| !(ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.' | '/' | ':' | ' ')))
     {
         return Err("aggregate api modelOverride contains unsupported characters".to_string());
     }
@@ -584,6 +584,9 @@ mod tests {
             last_balance_status: None,
             last_balance_error: None,
             last_balance_json: None,
+            proxy_disabled: false,
+            extra_headers_json: None,
+            model_map_json: None,
         }
     }
 
@@ -1166,6 +1169,29 @@ fn apply_probe_auth(
         .header("x-api-key", secret.trim())
         .header("api-key", secret.trim());
     Ok((builder, url))
+}
+
+fn apply_extra_headers(
+    mut builder: reqwest::blocking::RequestBuilder,
+    api: &AggregateApi,
+) -> reqwest::blocking::RequestBuilder {
+    let Some(raw) = api.extra_headers_json.as_deref().map(str::trim).filter(|v| !v.is_empty()) else {
+        return builder;
+    };
+    let Ok(map) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(raw) else {
+        return builder;
+    };
+    for (key, val) in &map {
+        if let Some(value) = val.as_str() {
+            if let (Ok(name), Ok(hval)) = (
+                HeaderName::from_bytes(key.trim().as_bytes()),
+                HeaderValue::from_str(value.trim()),
+            ) {
+                builder = builder.header(name, hval);
+            }
+        }
+    }
+    builder
 }
 
 /// 函数 `normalize_provider_type`
@@ -1969,6 +1995,7 @@ fn probe_claude_models_endpoint(
     } else {
         builder
     };
+    let builder = apply_extra_headers(builder, api);
     let response = add_claude_probe_headers(builder)
         .send()
         .map_err(|err| err.to_string())?;
@@ -2272,8 +2299,8 @@ fn probe_claude_endpoint(
         } else {
             builder
         };
+        let builder = apply_extra_headers(builder, api);
         let response = builder
-            .header("anthropic-version", "2023-06-01")
             .header(
                 "anthropic-beta",
                 "claude-code-20250219,interleaved-thinking-2025-05-14",
@@ -2404,6 +2431,8 @@ pub(crate) fn list_aggregate_apis() -> Result<Vec<AggregateApiSummary>, String> 
             last_balance_error: item.last_balance_error,
             last_balance_json: item.last_balance_json,
             proxy_disabled: item.proxy_disabled,
+            extra_headers_json: item.extra_headers_json,
+            model_map_json: item.model_map_json,
         })
         .collect())
 }
@@ -2663,6 +2692,8 @@ pub(crate) fn create_aggregate_api(
         last_balance_error: None,
         last_balance_json: None,
         proxy_disabled: false,
+        extra_headers_json: None,
+        model_map_json: None,
     };
     storage
         .insert_aggregate_api(&record)
@@ -2734,6 +2765,8 @@ pub(crate) fn update_aggregate_api(
     balance_query_config_json: Option<String>,
     model_slugs: Option<Vec<String>>,
     proxy_disabled: Option<bool>,
+    extra_headers_json: Option<String>,
+    model_map_json: Option<String>,
 ) -> Result<(), String> {
     if api_id.is_empty() {
         return Err("aggregate api id required".to_string());
@@ -2766,10 +2799,12 @@ pub(crate) fn update_aggregate_api(
             .update_aggregate_api_type(api_id, normalized_provider_type.as_str())
             .map_err(|err| err.to_string())?;
     }
-    let normalized_supplier_name = normalize_supplier_name(supplier_name)?;
-    storage
-        .update_aggregate_api_supplier_name(api_id, Some(normalized_supplier_name.as_str()))
-        .map_err(|err| err.to_string())?;
+    if supplier_name.is_some() {
+        let normalized_supplier_name = normalize_supplier_name(supplier_name)?;
+        storage
+            .update_aggregate_api_supplier_name(api_id, Some(normalized_supplier_name.as_str()))
+            .map_err(|err| err.to_string())?;
+    }
     if sort.is_some() {
         storage
             .update_aggregate_api_sort(api_id, normalize_sort(sort))
@@ -2939,6 +2974,18 @@ pub(crate) fn update_aggregate_api(
             .update_aggregate_api_proxy_disabled(api_id, proxy_disabled)
             .map_err(|err| err.to_string())?;
     }
+    if let Some(extra_headers) = extra_headers_json {
+        let normalized = extra_headers.trim();
+        storage
+            .update_aggregate_api_extra_headers(api_id, if normalized.is_empty() { None } else { Some(normalized) })
+            .map_err(|err| err.to_string())?;
+    }
+    if let Some(model_map) = model_map_json {
+        let normalized = model_map.trim();
+        storage
+            .update_aggregate_api_model_map(api_id, if normalized.is_empty() { None } else { Some(normalized) })
+            .map_err(|err| err.to_string())?;
+    }
     Ok(())
 }
 
@@ -3036,7 +3083,11 @@ pub(crate) fn test_aggregate_api_connection(
     let Some(secret) = secret else {
         return Err("aggregate api secret not found".to_string());
     };
-    let client = gateway::fresh_upstream_client();
+    let client = if api.proxy_disabled {
+        gateway::no_proxy_upstream_client()
+    } else {
+        gateway::fresh_upstream_client()
+    };
     let started_at = Instant::now();
     let provider_type = normalize_provider_type_value(api.provider_type.as_str());
     let result = match provider_type.as_str() {
@@ -3086,7 +3137,11 @@ pub(crate) fn discover_aggregate_api_models(api_id: &str) -> Result<Vec<String>,
         return Ok(vec![model_override.to_string()]);
     }
 
-    let client = gateway::fresh_upstream_client();
+    let client = if api.proxy_disabled {
+        gateway::no_proxy_upstream_client()
+    } else {
+        gateway::fresh_upstream_client()
+    };
     let provider_type = normalize_provider_type_value(api.provider_type.as_str());
     match provider_type.as_str() {
         AGGREGATE_API_PROVIDER_CLAUDE => {
@@ -3131,7 +3186,11 @@ pub(crate) fn refresh_aggregate_api_balance(
     let template = default_balance_query_template(normalize_balance_query_template(
         api.balance_query_template.clone(),
     )?);
-    let client = gateway::fresh_upstream_client();
+    let client = if api.proxy_disabled {
+        gateway::no_proxy_upstream_client()
+    } else {
+        gateway::fresh_upstream_client()
+    };
     let started_at = Instant::now();
     let result = match template.as_str() {
         AGGREGATE_API_BALANCE_TEMPLATE_NEW_API => {

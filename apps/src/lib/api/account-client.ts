@@ -219,6 +219,8 @@ interface AggregateApiPayload {
   balanceQueryConfigJson?: string | null;
   modelSlugs?: string[] | null;
   proxyDisabled?: boolean | null;
+  extraHeadersJson?: string | null;
+  modelMapJson?: string | null;
 }
 
 const MAX_IMPORT_RPC_BODY_BYTES = 4 * 1024 * 1024;
@@ -687,6 +689,8 @@ export const accountClient = {
             : null,
         modelSlugs: Array.isArray(params.modelSlugs) ? params.modelSlugs : null,
         proxyDisabled: typeof params.proxyDisabled === "boolean" ? params.proxyDisabled : null,
+        extraHeadersJson: typeof params.extraHeadersJson === "string" ? params.extraHeadersJson : null,
+        modelMapJson: typeof params.modelMapJson === "string" ? params.modelMapJson : null,
       })
     ),
   deleteAggregateApi: (apiId: string) =>

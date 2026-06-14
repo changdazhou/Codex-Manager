@@ -54,6 +54,7 @@ fn seed_openai_compat_gateway(storage: &Storage, platform_key: &str, key_id: &st
                 status: "active".to_string(),
                 created_at: now + sort,
                 updated_at: now + sort,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage

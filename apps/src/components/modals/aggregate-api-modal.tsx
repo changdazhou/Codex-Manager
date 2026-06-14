@@ -141,6 +141,8 @@ export function AggregateApiModal({
   const [action, setAction] = useState("");
   const [modelOverride, setModelOverride] = useState("");
   const [modelWhitelist, setModelWhitelist] = useState("");
+  const [extraHeadersJson, setExtraHeadersJson] = useState("");
+  const [modelMapJson, setModelMapJson] = useState("");
   const [balanceQueryEnabled, setBalanceQueryEnabled] = useState(false);
   const [balanceQueryTemplate, setBalanceQueryTemplate] =
     useState<BalanceQueryTemplate>("generic");
@@ -226,6 +228,8 @@ export function AggregateApiModal({
     setActionCustomEnabled(aggregateApi?.action !== null && aggregateApi?.action !== undefined);
     setModelOverride(aggregateApi?.modelOverride || "");
     setModelWhitelist((aggregateApi?.modelSlugs || []).join(", "));
+    setExtraHeadersJson(aggregateApi?.extraHeadersJson || "");
+    setModelMapJson(aggregateApi?.modelMapJson || "");
     setBalanceQueryEnabled(Boolean(aggregateApi?.balanceQueryEnabled));
     const nextBalanceQueryTemplate =
       aggregateApi?.balanceQueryTemplate === "new_api"
@@ -424,6 +428,8 @@ export function AggregateApiModal({
           actionCustomEnabled,
           action: actionCustomEnabled ? action.trim() : null,
           modelOverride: modelOverride.trim(),
+          extraHeadersJson: extraHeadersJson.trim() || null,
+          modelMapJson: modelMapJson.trim() || null,
           username: authType === "userpass" ? username.trim() || null : null,
           password: authType === "userpass" ? password.trim() || null : null,
           balanceQueryEnabled,
@@ -457,6 +463,8 @@ export function AggregateApiModal({
         actionCustomEnabled,
         action: actionCustomEnabled ? action.trim() : null,
         modelOverride: modelOverride.trim(),
+        extraHeadersJson: extraHeadersJson.trim() || null,
+        modelMapJson: modelMapJson.trim() || null,
         username: authType === "userpass" ? username.trim() : null,
         password: authType === "userpass" ? password.trim() : null,
         balanceQueryEnabled,
@@ -673,6 +681,38 @@ export function AggregateApiModal({
                 />
                 <p className="text-[11px] leading-4 text-muted-foreground">
                   {t("仅用于额度池归属统计；留空表示该来源对所有 API 可用模型生效。")}
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="aggregate-api-extra-headers">
+                  {t("自定义请求头")}
+                </Label>
+                <Input
+                  id="aggregate-api-extra-headers"
+                  placeholder={'{"comate_custom_header": "..."}'}
+                  value={extraHeadersJson}
+                  disabled={!isServiceReady}
+                  onChange={(event) => setExtraHeadersJson(event.target.value)}
+                />
+                <p className="text-[11px] leading-4 text-muted-foreground">
+                  {t("JSON 格式，转发请求和连接测试时都会附加这些头，可用于透传自定义认证头。")}
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="aggregate-api-model-map">
+                  {t("模型名映射")}
+                </Label>
+                <Input
+                  id="aggregate-api-model-map"
+                  placeholder={'{"gpt-5.5": "GPT-5.5", "claude-sonnet-4-6": "Claude Sonnet 4.6"}'}
+                  value={modelMapJson}
+                  disabled={!isServiceReady}
+                  onChange={(event) => setModelMapJson(event.target.value)}
+                />
+                <p className="text-[11px] leading-4 text-muted-foreground">
+                  {t("JSON 格式，将请求中的模型名称转换为上游期望的名称。")}
                 </p>
               </div>
 

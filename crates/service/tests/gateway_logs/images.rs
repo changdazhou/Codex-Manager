@@ -36,6 +36,7 @@ fn gateway_images_generation_wraps_codex_sse_as_openai_images_json() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -164,6 +165,7 @@ fn native_codex_responses_auto_injects_image_generation_tool() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -303,6 +305,7 @@ fn native_codex_image_generation_responses_request_passthroughs_tool_and_sse() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage

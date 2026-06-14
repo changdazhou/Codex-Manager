@@ -581,6 +581,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
 
@@ -633,6 +634,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage

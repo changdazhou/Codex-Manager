@@ -38,6 +38,7 @@ fn account_summary_serialization_matches_compact_contract() {
         model_slugs: vec!["gpt-5.4".to_string()],
         quota_capacity_primary_window_tokens: Some(100_000),
         quota_capacity_secondary_window_tokens: Some(1_000_000),
+        proxy_disabled: false,
     };
 
     let value = serde_json::to_value(summary).expect("serialize account summary");
@@ -97,6 +98,7 @@ fn account_list_result_serialization_includes_pagination_fields() {
             model_slugs: vec!["gpt-5.4".to_string()],
             quota_capacity_primary_window_tokens: Some(100_000),
             quota_capacity_secondary_window_tokens: Some(1_000_000),
+            proxy_disabled: false,
         }],
         total: 9,
         page: 2,

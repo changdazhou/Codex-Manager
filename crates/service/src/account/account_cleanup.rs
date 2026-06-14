@@ -419,6 +419,7 @@ mod tests {
                 status: "banned".to_string(),
                 created_at: 1,
                 updated_at: 1,
+                proxy_disabled: false,
             })
             .expect("insert banned");
         storage
@@ -433,6 +434,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: 1,
                 updated_at: 1,
+                proxy_disabled: false,
             })
             .expect("insert active");
 
@@ -483,6 +485,7 @@ mod tests {
                     status: status.to_string(),
                     created_at: 1,
                     updated_at: 1,
+                    proxy_disabled: false,
                 })
                 .expect("insert account");
         }

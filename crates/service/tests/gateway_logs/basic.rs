@@ -337,6 +337,7 @@ fn gateway_rewrites_account_pool_model_from_enabled_mapping() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -476,6 +477,7 @@ fn gateway_applies_saved_model_forward_rules_to_codex_responses_request() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage

@@ -317,6 +317,7 @@ fn insert_account_and_token(storage: &Storage) {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -365,6 +366,7 @@ fn insert_account_and_token_with_id(
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage

@@ -512,6 +512,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 1,
             updated_at: 1,
+            proxy_disabled: false,
         }
     }
 

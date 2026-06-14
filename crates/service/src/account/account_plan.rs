@@ -588,6 +588,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         let token = Token {
@@ -725,6 +726,7 @@ mod tests {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         let token = Token {

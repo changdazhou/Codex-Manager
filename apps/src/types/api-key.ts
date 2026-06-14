@@ -54,6 +54,8 @@ export interface AggregateApi {
   lastBalanceJson: string | null;
   modelSlugs: string[];
   proxyDisabled: boolean;
+  extraHeadersJson: string | null;
+  modelMapJson: string | null;
 }
 
 export interface AggregateApiCreateResult {

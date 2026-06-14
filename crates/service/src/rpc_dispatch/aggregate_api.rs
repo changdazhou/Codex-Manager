@@ -118,6 +118,8 @@ pub(super) fn try_handle(req: &JsonRpcRequest) -> Option<JsonRpcResponse> {
             let balance_query_config_json = super::string_param(req, "balanceQueryConfigJson");
             let model_slugs = string_array_param(req, "modelSlugs");
             let proxy_disabled = super::bool_param(req, "proxyDisabled");
+            let extra_headers_json = super::string_param(req, "extraHeadersJson");
+            let model_map_json = super::string_param(req, "modelMapJson");
             super::ok_or_error(update_aggregate_api(
                 api_id,
                 url,
@@ -142,6 +144,8 @@ pub(super) fn try_handle(req: &JsonRpcRequest) -> Option<JsonRpcResponse> {
                 balance_query_config_json,
                 model_slugs,
                 proxy_disabled,
+                extra_headers_json,
+                model_map_json,
             ))
         }
         "aggregateApi/readSecret" => {

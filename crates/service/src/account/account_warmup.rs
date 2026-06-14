@@ -617,6 +617,7 @@ mod tests {
                     status: status.to_string(),
                     created_at: now,
                     updated_at: now,
+                    proxy_disabled: false,
                 })
                 .expect("insert account");
             storage
@@ -661,6 +662,7 @@ mod tests {
             status: "active".to_string(),
             created_at: 0,
             updated_at: 0,
+            proxy_disabled: false,
         };
 
         let headers = build_warmup_headers(&account, "bearer-token").expect("build warmup headers");

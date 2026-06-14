@@ -157,6 +157,7 @@ fn existing_account_index_next_sort_uses_step_five() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert acc-1");
     storage
@@ -171,6 +172,7 @@ fn existing_account_index_next_sort_uses_step_five() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert acc-2");
 
@@ -298,6 +300,7 @@ fn import_single_item_reuses_existing_login_account_by_scope_identity() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert existing account");
 
@@ -504,6 +507,7 @@ fn import_single_item_restores_account_when_old_import_overwrote_scoped_identity
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert old overwritten account");
     storage
@@ -574,6 +578,7 @@ fn import_single_item_reuses_legacy_team_account_when_token_subject_matches() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert legacy account");
     storage

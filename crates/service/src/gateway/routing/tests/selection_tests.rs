@@ -41,6 +41,7 @@ fn candidate_snapshot_cache_reuses_recent_snapshot() {
             status: "active".to_string(),
             created_at: now_ts(),
             updated_at: now_ts(),
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -133,6 +134,7 @@ fn candidates_follow_account_sort_order() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage
@@ -217,6 +219,7 @@ fn gateway_error_status_change_invalidates_candidate_snapshot_cache() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -308,6 +311,7 @@ fn gateway_deactivation_status_change_invalidates_candidate_snapshot_cache() {
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -399,6 +403,7 @@ fn gateway_usage_limit_with_exhausted_snapshot_invalidates_candidate_snapshot_ca
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         })
         .expect("insert account");
     storage
@@ -505,6 +510,7 @@ fn low_quota_accounts_are_skipped_when_healthy_available() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage
@@ -594,6 +600,7 @@ fn append_low_quota_fallback_keeps_low_quota_candidates_at_tail() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage
@@ -681,6 +688,7 @@ fn all_low_quota_still_returns_candidates() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage
@@ -768,6 +776,7 @@ fn all_low_quota_without_fallback_returns_no_candidates() {
                 status: "active".to_string(),
                 created_at: now,
                 updated_at: now,
+                proxy_disabled: false,
             })
             .expect("insert account");
         storage

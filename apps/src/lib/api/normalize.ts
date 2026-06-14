@@ -916,6 +916,8 @@ export function normalizeAggregateApi(item: unknown): AggregateApi | null {
       asString(source.lastBalanceJson ?? source.last_balance_json) || null,
     modelSlugs: asStringArray(source.modelSlugs ?? source.model_slugs),
     proxyDisabled: asBoolean(source.proxyDisabled ?? source.proxy_disabled, false),
+    extraHeadersJson: asString(source.extraHeadersJson ?? source.extra_headers_json) || null,
+    modelMapJson: asString(source.modelMapJson ?? source.model_map_json) || null,
   };
 }
 

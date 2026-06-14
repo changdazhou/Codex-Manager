@@ -650,6 +650,10 @@ pub struct AggregateApiSummary {
     pub model_slugs: Vec<String>,
     #[serde(default)]
     pub proxy_disabled: bool,
+    #[serde(default)]
+    pub extra_headers_json: Option<String>,
+    #[serde(default)]
+    pub model_map_json: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

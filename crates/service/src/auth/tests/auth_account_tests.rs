@@ -59,6 +59,7 @@ fn build_account(
         status: "active".to_string(),
         created_at: now_ts(),
         updated_at: now_ts(),
+        proxy_disabled: false,
     }
 }
 

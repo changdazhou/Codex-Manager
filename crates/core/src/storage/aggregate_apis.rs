@@ -27,7 +27,9 @@ const AGGREGATE_API_SELECT_SQL: &str = "SELECT
     last_balance_status,
     last_balance_error,
     last_balance_json,
-    COALESCE(proxy_disabled, 0)
+    COALESCE(proxy_disabled, 0),
+    extra_headers_json,
+    model_map_json
  FROM aggregate_apis";
 
 impl Storage {
@@ -229,6 +231,22 @@ impl Storage {
         self.conn.execute(
             "UPDATE aggregate_apis SET proxy_disabled = ?1, updated_at = ?2 WHERE id = ?3",
             (proxy_disabled as i64, now_ts(), api_id),
+        )?;
+        Ok(())
+    }
+
+    pub fn update_aggregate_api_extra_headers(&self, api_id: &str, extra_headers_json: Option<&str>) -> Result<()> {
+        self.conn.execute(
+            "UPDATE aggregate_apis SET extra_headers_json = ?1, updated_at = ?2 WHERE id = ?3",
+            (extra_headers_json, now_ts(), api_id),
+        )?;
+        Ok(())
+    }
+
+    pub fn update_aggregate_api_model_map(&self, api_id: &str, model_map_json: Option<&str>) -> Result<()> {
+        self.conn.execute(
+            "UPDATE aggregate_apis SET model_map_json = ?1, updated_at = ?2 WHERE id = ?3",
+            (model_map_json, now_ts(), api_id),
         )?;
         Ok(())
     }
@@ -591,6 +609,8 @@ impl Storage {
         self.ensure_column("aggregate_apis", "last_balance_error", "TEXT")?;
         self.ensure_column("aggregate_apis", "last_balance_json", "TEXT")?;
         self.ensure_column("aggregate_apis", "proxy_disabled", "INTEGER NOT NULL DEFAULT 0")?;
+        self.ensure_column("aggregate_apis", "extra_headers_json", "TEXT")?;
+        self.ensure_column("aggregate_apis", "model_map_json", "TEXT")?;
         self.conn.execute(
             "UPDATE aggregate_apis
              SET provider_type = COALESCE(NULLIF(TRIM(provider_type), ''), 'codex')
@@ -782,6 +802,8 @@ fn map_aggregate_api_row(row: &Row<'_>) -> Result<AggregateApi> {
         last_balance_error: row.get(22)?,
         last_balance_json: row.get(23)?,
         proxy_disabled: row.get::<_, i64>(24).unwrap_or(0) != 0,
+        extra_headers_json: row.get(25).unwrap_or(None),
+        model_map_json: row.get(26).unwrap_or(None),
     })
 }
 

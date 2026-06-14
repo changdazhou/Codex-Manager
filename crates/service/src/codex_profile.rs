@@ -2057,6 +2057,7 @@ name = "Other"
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
+            proxy_disabled: false,
         };
         let token = Token {
             account_id: "acc-1".to_string(),
