@@ -843,6 +843,7 @@ export default function AccountManagerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -979,6 +980,7 @@ export default function AccountManagerPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

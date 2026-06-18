@@ -892,19 +892,6 @@ fn auto_associate_source_models(
         .map(|mapping| mapping.platform_model_slug.clone())
         .collect::<HashSet<_>>();
 
-    let aggregate_api_model_slugs: HashSet<String> =
-        if source_kind == ROUTING_SOURCE_KIND_OPENAI_ACCOUNT {
-            all_mappings
-                .iter()
-                .filter(|mapping| {
-                    mapping.source_kind == ROUTING_SOURCE_KIND_AGGREGATE_API && mapping.enabled
-                })
-                .map(|mapping| mapping.platform_model_slug.clone())
-                .collect()
-        } else {
-            HashSet::new()
-        };
-
     let prefs: std::collections::HashMap<String, String> = storage
         .list_model_source_mapping_preferences(source_kind, source_id)
         .map_err(|err| format!("list preferences failed: {err}"))?
@@ -976,11 +963,6 @@ fn auto_associate_source_models(
     let now = now_ts();
     for source_model in &source_models {
         if !platform_slugs.contains(source_model.upstream_model.as_str()) {
-            continue;
-        }
-        if source_kind == ROUTING_SOURCE_KIND_OPENAI_ACCOUNT
-            && aggregate_api_model_slugs.contains(source_model.upstream_model.as_str())
-        {
             continue;
         }
         if existing_source_platform_mappings.contains(source_model.upstream_model.as_str()) {

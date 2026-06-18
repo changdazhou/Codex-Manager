@@ -105,7 +105,9 @@ export function Sidebar() {
   const { t } = useI18n();
   const {
     isSidebarOpen,
+    isMobileSidebarOpen,
     toggleSidebar,
+    setMobileSidebarOpen,
     openCodexCliGuide,
     currentShellPath,
     navigateShellPath,
@@ -135,16 +137,20 @@ export function Sidebar() {
 
       if (href === currentShellPath) {
         event.preventDefault();
+        setMobileSidebarOpen(false);
         return;
       }
 
       event.preventDefault();
       navigateShellPath(href);
+      setMobileSidebarOpen(false);
     },
-    [currentShellPath, navigateShellPath],
+    [currentShellPath, navigateShellPath, setMobileSidebarOpen],
   );
 
   const renderedItems = useMemo(() => {
+    // On mobile (isMobileSidebarOpen), always show full labels
+    const showLabels = isSidebarOpen || isMobileSidebarOpen;
     const sections = getAllowedTopLevelRouteSections(routeAccess);
     return sections.map((section, sectionIndex) => (
       <div
@@ -154,7 +160,7 @@ export function Sidebar() {
           sectionIndex > 0 && "mt-3 border-t border-border/50 pt-3",
         )}
       >
-        {isSidebarOpen ? (
+        {showLabels ? (
           <div className="px-3 pb-1 text-[11px] font-semibold uppercase text-muted-foreground/70">
             {t(section.label)}
           </div>
@@ -171,7 +177,7 @@ export function Sidebar() {
                 item={navItem}
                 itemName={itemName}
                 isActive={route.path === currentShellPath}
-                isSidebarOpen={isSidebarOpen}
+                isSidebarOpen={showLabels}
                 onNavigate={handleNavigate}
               />
             );
@@ -179,19 +185,24 @@ export function Sidebar() {
         </div>
       </div>
     ));
-  }, [currentShellPath, handleNavigate, isSidebarOpen, routeAccess, t]);
+  }, [currentShellPath, handleNavigate, isSidebarOpen, isMobileSidebarOpen, routeAccess, t]);
 
   return (
     <div
       className={cn(
-        "relative z-20 flex shrink-0 flex-col glass-sidebar transition-[width] duration-300 ease-in-out",
-        isSidebarOpen ? "w-56" : "w-16"
+        "relative z-40 flex shrink-0 flex-col glass-sidebar transition-[width,transform] duration-300 ease-in-out",
+        // Desktop: controlled by isSidebarOpen
+        "md:translate-x-0",
+        isSidebarOpen ? "md:w-56" : "md:w-16",
+        // Mobile: slide-over drawer
+        "fixed inset-y-0 left-0 md:relative",
+        isMobileSidebarOpen ? "translate-x-0 w-56" : "-translate-x-full w-56 md:translate-x-0"
       )}
     >
       <div
         className={cn(
           "flex h-16 items-center border-b shrink-0",
-          isSidebarOpen ? "px-4" : "px-2"
+          (isSidebarOpen || isMobileSidebarOpen) ? "px-4" : "px-2"
         )}
       >
         <Button
@@ -202,13 +213,13 @@ export function Sidebar() {
           aria-label={brandTitle}
           className={cn(
             "flex h-auto w-full items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 transition-colors duration-200 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-            isSidebarOpen ? "text-left" : "justify-center"
+            (isSidebarOpen || isMobileSidebarOpen) ? "text-left" : "justify-center"
           )}
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <span className="text-sm font-bold">CM</span>
           </div>
-          {isSidebarOpen && (
+          {(isSidebarOpen || isMobileSidebarOpen) && (
             <div className="flex flex-col overflow-hidden animate-in fade-in duration-300">
               <span className="text-sm font-bold truncate">CodexManager</span>
               <span className="text-xs text-muted-foreground truncate opacity-70">{t("账号池 · 用量管理")}</span>
@@ -223,7 +234,7 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="border-t p-2 shrink-0">
+      <div className="border-t p-2 shrink-0 hidden md:block">
         <Button
           variant="ghost"
           size="icon"

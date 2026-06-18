@@ -19,6 +19,7 @@ interface AppState {
   appSettings: AppSettings;
   runtimeCapabilities: RuntimeCapabilities | null;
   isSidebarOpen: boolean;
+  isMobileSidebarOpen: boolean;
   isCodexCliGuideOpen: boolean;
   currentShellPath: TopLevelRoutePath;
   openShellTabs: TopLevelRoutePath[];
@@ -28,6 +29,7 @@ interface AppState {
   setRuntimeCapabilities: (capabilities: RuntimeCapabilities | null) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  setMobileSidebarOpen: (open: boolean) => void;
   openCodexCliGuide: () => void;
   closeCodexCliGuide: () => void;
   syncShellPathFromLocation: (path: string) => void;
@@ -138,6 +140,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   runtimeCapabilities: null,
   isSidebarOpen: true,
+  isMobileSidebarOpen: false,
   isCodexCliGuideOpen: false,
   currentShellPath: initialShellPath,
   openShellTabs: [initialShellPath],
@@ -151,8 +154,10 @@ export const useAppStore = create<AppState>((set) => ({
   setRuntimeCapabilities: (runtimeCapabilities) => set({ runtimeCapabilities }),
     
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  
+
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+
+  setMobileSidebarOpen: (open) => set({ isMobileSidebarOpen: open }),
 
   openCodexCliGuide: () => set({ isCodexCliGuideOpen: true }),
 

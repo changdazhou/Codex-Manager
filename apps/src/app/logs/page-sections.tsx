@@ -323,6 +323,7 @@ export function RequestLogsTabContent({
           </div>
         </CardHeader>
         <CardContent className="px-0">
+          <div className="overflow-x-auto">
           <Table className="min-w-[1500px] table-fixed">
             <TableHeader>
               <TableRow>
@@ -428,6 +429,7 @@ export function RequestLogsTabContent({
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

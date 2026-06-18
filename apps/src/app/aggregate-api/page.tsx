@@ -1080,6 +1080,7 @@ export default function AggregateApiPage() {
 
         <Card className="glass-card overflow-hidden py-0 shadow-sm">
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
@@ -1521,6 +1522,7 @@ export default function AggregateApiPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

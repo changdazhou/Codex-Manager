@@ -767,6 +767,7 @@ export function AccountsPageView(props: AccountsPageViewProps) {
 
       <Card className="glass-card overflow-hidden py-0 shadow-sm">
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -1098,6 +1099,7 @@ export function AccountsPageView(props: AccountsPageViewProps) {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

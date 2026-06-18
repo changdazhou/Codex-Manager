@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { useAppStore } from "@/lib/store/useAppStore";
 import { Switch } from "@/components/ui/switch";
@@ -44,6 +44,7 @@ export function Header() {
     setServiceStatus,
     setAppSettings,
     currentShellPath,
+    setMobileSidebarOpen,
   } = useAppStore();
   const { t } = useI18n();
   const [isToggling, setIsToggling] = useState(false);
@@ -171,14 +172,23 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 grid h-16 grid-cols-[minmax(0,auto)_minmax(0,1fr)_auto] items-center gap-3 glass-header px-4 xl:px-6">
-        <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 glass-header px-4 xl:px-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-8 w-8 shrink-0"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label={t("打开侧边栏")}
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+        <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
           <h1 className="truncate text-lg font-semibold">{getPageTitle()}</h1>
-          <Badge variant={serviceStatus.connected ? "default" : "secondary"} className="h-5">
+          <Badge variant={serviceStatus.connected ? "default" : "secondary"} className="h-5 shrink-0">
             {serviceStatus.connected ? t("服务已连接") : t("服务未连接")}
           </Badge>
           {serviceStatus.version ? (
-            <span className="text-xs text-muted-foreground">v{serviceStatus.version}</span>
+            <span className="hidden text-xs text-muted-foreground sm:inline">v{serviceStatus.version}</span>
           ) : null}
         </div>
 
@@ -187,10 +197,10 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 xl:gap-3">
-          <LanguageSwitcher compact triggerClassName="w-[124px] xl:w-[132px]" />
+          <LanguageSwitcher compact triggerClassName="hidden sm:flex w-[124px] xl:w-[132px]" />
 
           {canManageService ? (
-            <div className="flex items-center gap-2 rounded-lg border bg-card/30 px-2.5 py-1.5 shadow-sm">
+            <div className="hidden sm:flex items-center gap-2 rounded-lg border bg-card/30 px-2.5 py-1.5 shadow-sm">
               <span className="text-xs font-medium text-muted-foreground">{t("监听端口")}</span>
               <Input
                 className="h-7 w-16 bg-transparent p-0 text-xs font-mono focus-visible:ring-0"

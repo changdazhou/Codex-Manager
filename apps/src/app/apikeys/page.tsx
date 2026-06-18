@@ -6,6 +6,7 @@ import {
   DollarSign,
   Copy,
   Download,
+  Upload,
   Eye,
   EyeOff,
   ExternalLink,
@@ -353,6 +354,8 @@ export default function ApiKeysPage() {
   const showOverviewLoading =
     isServiceReady && isPageActive && isUsageOverviewLoading;
 
+  const [isImporting, setIsImporting] = useState(false);
+
   const exportApiKeys = async () => {
     const items = await Promise.all(
       (apiKeys || []).map(async (key) => {
@@ -382,6 +385,70 @@ export default function ApiKeysPage() {
     a.download = "platform-keys.json";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const importApiKeys = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      setIsImporting(true);
+      try {
+        const text = await file.text();
+        const items = JSON.parse(text) as Array<{
+          name?: string;
+          secret?: string | null;
+          model?: string | null;
+          rotationStrategy?: string | null;
+          protocol?: string | null;
+          status?: string | null;
+        }>;
+        if (!Array.isArray(items)) throw new Error("JSON 格式错误，需要数组");
+
+        // Load existing secrets for dedup
+        const existingSecrets = new Set<string>();
+        for (const key of apiKeys) {
+          try {
+            const secret = await accountClient.readApiKeySecret(key.id);
+            if (secret) existingSecrets.add(secret);
+          } catch { /* ignore */ }
+        }
+
+        let success = 0;
+        let skipped = 0;
+        let failed = 0;
+        for (const item of items) {
+          if (item.secret && existingSecrets.has(item.secret)) {
+            skipped++;
+            continue;
+          }
+          try {
+            await accountClient.createApiKey({
+              name: item.name || null,
+              modelSlug: item.model || null,
+              rotationStrategy: item.rotationStrategy || null,
+              protocolType: item.protocol || null,
+              customKey: item.secret || null,
+            });
+            success++;
+          } catch {
+            failed++;
+          }
+        }
+        await queryClient.invalidateQueries({ queryKey: ["apikeys"] });
+        const parts = [`成功 ${success} 条`];
+        if (skipped) parts.push(`跳过重复 ${skipped} 条`);
+        if (failed) parts.push(`失败 ${failed} 条`);
+        toast.success(`导入完成：${parts.join("，")}`);
+      } catch (err) {
+        toast.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setIsImporting(false);
+      }
+    };
+    input.click();
   };
 
   /**
@@ -646,6 +713,15 @@ export default function ApiKeysPage() {
           <Button
             variant="outline"
             className="glass-card h-10 gap-2 rounded-xl px-3 shadow-sm"
+            onClick={importApiKeys}
+            disabled={!isServiceReady || isImporting}
+          >
+            <Upload className="h-4 w-4" />
+            {isImporting ? t("导入中...") : t("导入")}
+          </Button>
+          <Button
+            variant="outline"
+            className="glass-card h-10 gap-2 rounded-xl px-3 shadow-sm"
             onClick={() => void exportApiKeys()}
             disabled={!isServiceReady || !apiKeys?.length}
           >
@@ -690,6 +766,7 @@ export default function ApiKeysPage() {
 
       <Card className="glass-card overflow-hidden py-0 shadow-sm">
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table className="min-w-[1160px]">
             <TableHeader>
               <TableRow>
@@ -974,6 +1051,7 @@ export default function ApiKeysPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

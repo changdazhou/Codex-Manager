@@ -74,6 +74,14 @@ pub fn start_server(addr: &str) -> std::io::Result<()> {
         log::warn!("storage startup init skipped: {}", err);
     }
     crate::sync_runtime_settings_from_storage();
+    if let Some(storage) = crate::storage_helpers::open_storage() {
+        if let Err(err) = crate::apikey_models::bootstrap_account_pool_model_routes(&storage, false) {
+            log::warn!("startup bootstrap account model routes failed: {err}");
+        }
+        if let Err(err) = crate::apikey_models::bootstrap_aggregate_api_model_routes(&storage) {
+            log::warn!("startup bootstrap aggregate api model routes failed: {err}");
+        }
+    }
     match crate::app_settings::sync_gateway_user_agent_version_from_codex_latest() {
         Ok(version) => {
             log::info!("codex latest client_version synced at startup: version={version}")
